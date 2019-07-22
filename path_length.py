@@ -17,7 +17,7 @@ nameInRepo = pathName
 try:
   # Does this item already exist in the Repository?
   if int(Repository.Exists(nameInRepo)):
-    print("Path \'" + pathName + "\' is already included in the repo... using that.")
+    print("[path_length] Path \'" + pathName + "\' is already included in the repo... using that.")
   else:
     GUI.ExportPathToRepos(pathName, nameInRepo)
 
@@ -40,8 +40,8 @@ try:
                         math.pow(points[i][1] - points[i-1][1], 2) +
                         math.pow(points[i][2] - points[i-1][2], 2))
 
-  print("Spline Path Length: " + str(length))
-  
+  print("[path_length] Spline Path Length: " + str(length))
+
   # SimVascular must have the path re-imported to view it in the GUI, even though
   # it is now in the Repository.
   GUI.ImportPathFromRepos(nameInRepo)
