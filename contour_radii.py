@@ -10,9 +10,18 @@ import numpy
 # aka. segmentations.
 # ######################################
 
-contourName = 'aorta'
+# contourName = 'aorta'
+contourName = 'test'
 contourNameInRepo = contourName
-contourIDs = range(0, 20)
+# contourIDs = range(0, 20)
+contourIDs = range(0, 1)
+
+Contour.SetContourKernel('Circle')
+contour = Contour.pyContour()
+GUI.ExportPathToRepos('aorta', 'aorta')
+contour.NewObject('test','aorta', 0)
+contour.SetCtrlPtsByRadius([0, 0, 0], 5)
+GUI.ImportContoursFromRepos('test', ['test'], 'test')
 
 # Set up a list of the names to give the contour objects when copied into the repository.
 repositoryContourIDs = [contourNameInRepo+"_contour_"+str(id) for id in contourIDs]
@@ -26,7 +35,6 @@ try:
 
   # Calculate the centers of each contour in the segmentation group with a VTK
   # center of mass filter, then calculate the radius of the contour.
-  # contourCenters = []
   contourRadii = []
   for id in repositoryContourIDs:
     # Export the id'th contour to a VTK polyData object.
@@ -36,7 +44,6 @@ try:
     com_filter.SetInputData(contour)
     com_filter.Update()
     center = com_filter.GetCenter()
-    # contourCenters.append(center)
 
     # Save the points in the contour to a vtkPoints object.
     contourPts = contour.GetPoints()
@@ -66,6 +73,9 @@ try:
   # Garbage collection.
   for id in repositoryContourIDs:
     Repository.Delete(id)
+
+  Repository.Delete('test')
+  Repository.Delete('aorta')
 except Exception as e:
   print(e)
   # pass

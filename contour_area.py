@@ -10,9 +10,18 @@ import numpy
 # aka. segmentations.
 # ######################################
 
-contourName = 'aorta'
+# contourName = 'aorta'
+contourName = 'test'
 contourNameInRepo = contourName
-contourIDs = range(0, 20)
+# contourIDs = range(0, 20)
+contourIDs = range(0, 1)
+
+Contour.SetContourKernel('Circle')
+contour = Contour.pyContour()
+GUI.ExportPathToRepos('aorta', 'aorta')
+contour.NewObject('test','aorta', 0)
+contour.SetCtrlPtsByRadius([0, 0, 0], 1)
+GUI.ImportContoursFromRepos('test', ['test'], 'test')
 
 # Set up a list of the names to give the contour objects when copied into the repository.
 repositoryContourIDs = [contourNameInRepo+"_contour_"+str(id) for id in contourIDs]
@@ -64,10 +73,12 @@ try:
       crossP = [0.0, 0.0, 0.0]
       vtk.vtkMath.Cross(vec1, vec2, crossP)
 
-      # The magnitude of the cross product is the area of the section between
-      # the two points.
-      # Distance formula: sqrt(dx^2 + dy^2 + dz^2)
-      newArea = math.sqrt(math.pow(crossP[0], 2) +
+      # The magnitude of the cross product is the area of the parallelogram
+      # section between the two points. We take half of this value because we
+      # are only interested in section that falls inside the .
+      # (https://en.wikipedia.org/wiki/Cross_product#Geometric_meaning)
+      # Magnitude of vector: sqrt(dx^2 + dy^2 + dz^2)
+      newArea = 0.5 * math.sqrt(math.pow(crossP[0], 2) +
                           math.pow(crossP[1], 2) +
                           math.pow(crossP[2], 2))
 
@@ -76,9 +87,6 @@ try:
 
     # Add the area of this contour to the list.
     contourArea.append(area)
-
-  print("contourArea:")
-  print(contourArea)
 
   # Log stats.
   print("[contour_area] Area statistics:")
@@ -90,6 +98,9 @@ try:
   # Garbage collection.
   for id in repositoryContourIDs:
     Repository.Delete(id)
+
+  Repository.Delete('test')
+  Repository.Delete('aorta')
 except Exception as e:
   print(e)
   # pass
