@@ -47,9 +47,10 @@ try:
 
     # Save the points in the contour to a vtkPoints object.
     contourPts = contour.GetPoints()
-    # Iterate through the list of points.
+    # Iterate through the list of points, but not the last two. (last two are
+    #  control points that bung up the solution)
     radii = []
-    for pointIndex in range(contourPts.GetNumberOfPoints()):
+    for pointIndex in range(contourPts.GetNumberOfPoints() - 2):
       # Save the point to a cordinate list.
       coord = [0.0, 0.0, 0.0]
       contourPts.GetPoint(pointIndex, coord)

@@ -45,17 +45,20 @@ try:
     # Save the points in the contour to a vtkPoints object.
     contourPts = contour.GetPoints()
 
-    # Iterate through the vtkPoints object and calculate partial areas from
+    # Iterate through the vtkPoints object, but not the last two (last two are
+    #  control points that bung up the solution) and calculate partial areas from
     # vector cross products.
     area = 0
-    for index in range(contourPts.GetNumberOfPoints()):
+    for index in range(contourPts.GetNumberOfPoints() - 2):
       # Get the first point.
       point = [0.0, 0.0, 0.0]
       contourPts.GetPoint(index, point)
 
       # Get the second point.
       nextPoint = [0.0, 0.0, 0.0]
-      if index is contourPts.GetNumberOfPoints() - 1:
+      # If this is the last point in the contour, (numPts - 2 - 1) then grab the
+      # first one to close the contour.
+      if index is contourPts.GetNumberOfPoints() - 3:
         contourPts.GetPoint(0, nextPoint)
       else:
         contourPts.GetPoint(index + 1, nextPoint)
