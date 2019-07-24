@@ -69,10 +69,10 @@ try:
 
   # Log stats.
   print("[contour_radii] Radius statistics:")
-  print("[contour_radii] \tMin:\t" + str(min(contourRadii)))
-  print("[contour_radii] \tMax:\t" + str(max(contourRadii)))
-  print("[contour_radii] \tAvg:\t" + str(numpy.mean(contourRadii)))
-  print("[contour_radii] \tMedian:\t" + str(numpy.median(contourRadii)))
+  print("[contour_radii]   Min:\t" + str(min(contourRadii)))
+  print("[contour_radii]   Max:\t" + str(max(contourRadii)))
+  print("[contour_radii]   Avg:\t" + str(numpy.mean(contourRadii)))
+  print("[contour_radii]   Median:\t" + str(numpy.median(contourRadii)))
 
   # Garbage collection.
   for id in repositoryContourIDs:

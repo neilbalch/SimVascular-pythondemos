@@ -96,10 +96,10 @@ try:
 
   # Log stats.
   print("[contour_area] Area statistics:")
-  print("[contour_area] \tMin:\t" + str(min(contourArea)))
-  print("[contour_area] \tMax:\t" + str(max(contourArea)))
-  print("[contour_area] \tAvg:\t" + str(numpy.mean(contourArea)))
-  print("[contour_area] \tMedian:\t" + str(numpy.median(contourArea)))
+  print("[contour_area]   Min:\t" + str(min(contourArea)))
+  print("[contour_area]   Max:\t" + str(max(contourArea)))
+  print("[contour_area]   Avg:\t" + str(numpy.mean(contourArea)))
+  print("[contour_area]   Median:\t" + str(numpy.median(contourArea)))
 
   # Garbage collection.
   for id in repositoryContourIDs:
