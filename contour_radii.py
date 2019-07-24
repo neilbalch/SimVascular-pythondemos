@@ -10,18 +10,21 @@ import numpy
 # aka. segmentations.
 # ######################################
 
-# contourName = 'aorta'
-contourName = 'test'
+contourName = 'aorta'
 contourNameInRepo = contourName
-# contourIDs = range(0, 20)
-contourIDs = range(0, 1)
+contourIDs = range(0, 20)
 
-Contour.SetContourKernel('Circle')
-contour = Contour.pyContour()
-GUI.ExportPathToRepos('aorta', 'aorta')
-contour.NewObject('test','aorta', 0)
-contour.SetCtrlPtsByRadius([0, 0, 0], 5)
-GUI.ImportContoursFromRepos('test', ['test'], 'test')
+# To test this script, uncomment the following lines:
+# contourName = 'test'
+# contourNameInRepo = contourName
+# contourIDs = range(0, 1)
+
+# Contour.SetContourKernel('Circle')
+# contour = Contour.pyContour()
+# GUI.ExportPathToRepos('aorta', 'aorta')
+# contour.NewObject('test','aorta', 0)
+# contour.SetCtrlPtsByRadius([0, 0, 0], 5)
+# GUI.ImportContoursFromRepos('test', ['test'], 'test')
 
 # Set up a list of the names to give the contour objects when copied into the repository.
 repositoryContourIDs = [contourNameInRepo+"_contour_"+str(id) for id in contourIDs]
