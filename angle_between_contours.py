@@ -121,13 +121,12 @@ try:
           + str(contour_id1) + " and " + str(contour_id2) + ":")
     print("[angle_between_contours] Angle (rad): " + str(angle))
     print("[angle_between_contours] Angle (deg): " + str(math.degrees(angle)))
-
-    # Garbage collection.
-    for id in repo_contour_ids:
-        Repository.Delete(id)
-    # Repository.Delete(name_of_obj)
-    # Repository.Delete(name_of_obj2)
 except Exception as e:
     print(e)
     # pass
 
+# Garbage collection.
+for id in repo_contour_ids:
+    Repository.Delete(id)
+# Repository.Delete(name_of_obj)
+# Repository.Delete(name_of_obj2)

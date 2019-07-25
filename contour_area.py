@@ -10,8 +10,8 @@ import numpy
 # aka. segmentations.
 # ######################################
 
-contour_name = 'aorta'
-contour_name_in_repo = contour_name
+contour_group_name = 'aorta'
+contour_group_name_in_repo = contour_group_name
 contour_ids = range(0, 20)
 
 # To test this script, uncomment the following lines:
@@ -37,17 +37,17 @@ contour_ids = range(0, 20)
 
 
 # Set up a list of the names to give the contour objects when copied into the repository.
-repository_contour_ids = [contour_name_in_repo+"_contour_"+str(id) for id in contour_ids]
+repo_contour_ids = [contour_group_name_in_repo+"_contour_"+str(id) for id in contour_ids]
 
 try:
     # Does this item already exist in the Repository?
-    if int(Repository.Exists(repository_contour_ids[0])):
-        print("[contour_area] Contour \'" + contour_name_in_repo + "\' is already included in the repo... using that.")
+    if int(Repository.Exists(repo_contour_ids[0])):
+        print("[contour_area] Contour \'" + contour_group_name_in_repo + "\' is already included in the repo... using that.")
     else:
-        GUI.ExportContourToRepos(contour_name, repository_contour_ids)
+        GUI.ExportContourToRepos(contour_group_name, repo_contour_ids)
 
     contour_area = []
-    for id in repository_contour_ids:
+    for id in repo_contour_ids:
         # Export the id'th contour to a VTK polyData object.
         contour = Repository.ExportToVtk(id)
         # Apply a VTK filter to locate the center of mass (average) of the points in the contour.
@@ -59,9 +59,9 @@ try:
         contour_pts = contour.GetPoints()
 
         # Iterate through the vtkPoints object, but not the last two (last two are
-        #  control points that bung up the solution) and calculate partial areas from
+        # control points that bung up the solution) and calculate partial areas from
         # vector cross products.
-        area = 0
+        sector_area = 0
         for index in range(contour_pts.GetNumberOfPoints() - 2):
             # Get the first point.
             point = [0.0, 0.0, 0.0]
@@ -91,18 +91,18 @@ try:
 
             # The magnitude of the cross product is the area of the parallelogram
             # section between the two points. We take half of this value because we
-            # are only interested in section that falls inside the .
+            # are only interested in section that falls inside the contour.
             # (https://en.wikipedia.org/wiki/Cross_product#Geometric_meaning)
             # Magnitude of vector: sqrt(dx^2 + dy^2 + dz^2)
-            new_area = 0.5 * math.sqrt(math.pow(cross_p[0], 2) +
-                                math.pow(cross_p[1], 2) +
-                                math.pow(cross_p[2], 2))
+            temp_sector_area = 0.5 * math.sqrt(math.pow(cross_p[0], 2) +
+                                               math.pow(cross_p[1], 2) +
+                                               math.pow(cross_p[2], 2))
 
             # Add the area of this section to the total.
-            area += new_area
+            sector_area += temp_sector_area
 
         # Add the area of this contour to the list.
-        contour_area.append(area)
+        contour_area.append(sector_area)
 
     # Log stats.
     print("[contour_area] Area statistics:")
@@ -110,13 +110,10 @@ try:
     print("[contour_area]   Max:\t\t" + str(max(contour_area)))
     print("[contour_area]   Avg:\t\t" + str(numpy.mean(contour_area)))
     print("[contour_area]   Median:\t" + str(numpy.median(contour_area)))
-
-    # Garbage collection.
-    for id in repository_contour_ids:
-        Repository.Delete(id)
-
-    Repository.Delete('test')
-    Repository.Delete('aorta')
 except Exception as e:
-    print(e)
-    # pass
+    print("Error!" + str(e))
+
+# Garbage collection.
+for id in repo_contour_ids:
+    Repository.Delete(id)
+# Repository.Delete('test')
