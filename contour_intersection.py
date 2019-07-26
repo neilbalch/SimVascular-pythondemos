@@ -11,16 +11,16 @@ import numpy
 # ######################################
 
 contour_group_name = 'aorta'
-# contour_group_name = 'test'
 contour_group_name_in_repo = contour_group_name
-# contour_ids = range(0, 20)
-contour_ids = range(0, 3)
+contour_ids = range(0, 39)
 
 # To test this script, uncomment the following lines:
 # PREREQUISITES: Path test must be a U curve and >= 3 points long.
-# contour_group_name = 'test-contour'
+# TODO: For whatever reason, this test doesn't work because of the circles being
+#       generated. For real contours, this script has been shown to work.
+# contour_group_name = 'test'
 # contour_group_name_in_repo = contour_group_name
-# contour_ids = range(0, 1)
+# contour_ids = range(0, 3)
 
 # path_to_import = 'test'
 # path_name_in_repo = path_to_import + '-path'
@@ -53,16 +53,20 @@ contour_ids = range(0, 3)
 # Set up a list of the names to give the contour objects when copied into the repository.
 repo_contour_ids = [contour_group_name_in_repo+"_contour_"+str(id) for id in contour_ids]
 
+# Uses a Delaunay triangulation filter to divide the polydata point contour into
+# a triangle mesh. (https://en.wikipedia.org/wiki/Delaunay_triangulation)
+#
 # Arguments:
 #   polydata (vtkPolyData): Input polydata.
 # Returns:
 #   vtkPolyData: Converted polydata.
 def convert_pts_to_mesh(polydata):
-    aCellArray = vtk.vtkCellArray()
+    # aCellArray = vtk.vtkCellArray()
 
     boundary = vtk.vtkPolyData()
     boundary.SetPoints(polydata.GetPoints())
-    boundary.SetPolys(aCellArray)
+    # boundary.SetPolys(aCellArray)
+
     delaunay = vtk.vtkDelaunay2D()
     delaunay.SetInputData(polydata)
     delaunay.SetSourceData(boundary)
@@ -79,6 +83,11 @@ try:
     else:
         GUI.ExportContourToRepos(contour_group_name, repo_contour_ids)
 
+    # Guards against unnecessary error output from vtkPointLocator:
+    # "vtkPointLocator (0x564b0b359900): No points to subdivide"
+    # TODO: Figure out why these non-fatal errors are being thrown.
+    vtk.vtkObject.GlobalWarningDisplayOff()
+
     # Iterate through the list of contours, comparing every contour to every
     # other contour.
     intersecting_contours = []
@@ -92,29 +101,34 @@ try:
             result_polydata1 = convert_pts_to_mesh(contour1)
             result_polydata2 = convert_pts_to_mesh(contour2)
 
+            # Apply the intersection filter to detect intersections between
+            # source contours.
             intersection_operation = vtk.vtkIntersectionPolyDataFilter()
             intersection_operation.SetInputData(0, result_polydata1)
             intersection_operation.SetInputData(1, result_polydata2)
             intersection_operation.Update()
 
+            # Get the number of intersection locations, log it to the screen
+            # and add intersected contours to the list.
             num_crosses = intersection_operation.GetNumberOfIntersectionPoints()
-            print("[contour_intersection] i: " + str(i) + ", j: " + str(j) + ", # of crosses: " + str(num_crosses))
+            print("[contour_intersection] contour1: " + str(i) + ", contour2: "
+                  + str(j) + ", num intersections: " + str(num_crosses))
             if num_crosses:
                 intersecting_contours.append([i, j])
 
+    # If there were any intersections, log about it.
     if len(intersecting_contours) is 0:
         print("[contour_intersection] No overlapping contours!")
     else:
         print("[contour_intersection] The following contours overlap!")
         for element in intersecting_contours:
-            print("[contour_intersection]\t Contours " + str(element[0]) + " and "
-                  + str(element[1]) + ".")
+            print("[contour_intersection]\t Contours " + str(element[0])
+                  + " and " + str(element[1]) + ".")
 except Exception as e:
     print("Error!" + str(e))
 
 # Garbage collection.
 for id in repo_contour_ids:
     Repository.Delete(id)
-# Repository.Delete('test')
 # Repository.Delete(name_of_obj)
 # Repository.Delete(name_of_obj2)
