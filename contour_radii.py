@@ -15,8 +15,8 @@ contour_group_name_in_repo = contour_group_name
 contour_ids = range(0, 20)
 
 # To test this script, uncomment the following lines:
-# contour_name = 'test'
-# contour_name_in_repo = contour_name
+# contour_group_name = 'test'
+# contour_group_name_in_repo = contour_group_name
 # contour_ids = range(0, 1)
 
 # kernel = 'Circle'

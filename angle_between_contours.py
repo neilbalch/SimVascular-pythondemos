@@ -16,6 +16,7 @@ contour_id1 = 7
 contour_id2 = 17
 
 # To test this script, uncomment the following lines:
+# PREREQUISITES: Path test must be a straight line and >= 2 points long.
 # contour_group_name = 'test-contour'
 # contour_group_name_in_repo = contour_group_name
 # contour_id1 = 0
