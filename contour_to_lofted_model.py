@@ -58,9 +58,9 @@ def create_solid_from_path(src_path_name, starting_radius):
     path_solid_name = path_name + "_solid"
     solid.NewObject(path_solid_name)
     # Cap the lofted volume.
-    path_lofted_capped = path_lofted_name + "_capped"
-    VMTKUtils.Cap_with_ids(path_lofted_name, path_lofted_capped, 0, 0)
-    solid.SetVtkPolyData(path_lofted_capped)
+    path_lofted_capped_name = path_lofted_name + "_capped"
+    VMTKUtils.Cap_with_ids(path_lofted_name, path_lofted_capped_name, 0, 0)
+    solid.SetVtkPolyData(path_lofted_capped_name)
     num_triangles_on_cap = 150
     solid.GetBoundaryFaces(num_triangles_on_cap)
 
