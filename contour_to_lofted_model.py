@@ -2,29 +2,42 @@ from sv import *
 import sv_vis as vis
 import random, os
 
-def create_solid_from_path(src_path_name, starting_radius):
-    path_name = src_path_name
+#
+# Creates a lofted solid from the provided source path with circular contours
+# with radii +/- 0.25 from initial_radius.
+#
+# Args:
+#  src_path_name (String): Name of the source path.
+#  initial_radius (double): Initial "average" radius to use.
+# Returns:
+#  String: Name of the resulting lofted solid.
+
+def create_solid_from_path(src_path_name, initial_radius):
+    # Load in the source path and store the position points.
     path = Path.pyPath()
-    path.GetObject(path_name)
+    path.GetObject(src_path_name)
+    path_pos_points = path.GetPathPosPts()
 
     # Create contours from the points.
     kernel = 'Circle'
     Contour.SetContourKernel(kernel)
 
-    prev_radius = starting_radius # Last radius from which to add/subtract a random number.
-    path_ctr_pds = []             # List of polydata objects created from the contours.
+    prev_radius = initial_radius # Last radius from which to add/subtract a random number.
+    path_ctr_pds = []            # List of polydata objects created from the contours.
     # Extract every 10'th contour.
     for id in range(int(path.GetPathPtsNum() / 10)):
         contour = Contour.pyContour()
 
         # Create a new blank contour object.
-        path_contour_name = path_name + '-contour' + str(id * 10)
-        create_from_path_point = id * 10
-        contour.NewObject(path_contour_name, path_name, create_from_path_point)
+        path_contour_name = src_path_name + '-contour' + str(id * 10)
+        create_from_point = id * 10
+        contour.NewObject(path_contour_name, src_path_name, create_from_point)
 
-        # Randomize the radius and create the circular contour.
-        center_pt = [0, 0, 0]
-        radius = prev_radius + 0* (random.random() - 0.5)
+        # Randomize the radius and create the circular contour. Coords for the
+        # center must be defined in absolute 3D space, so we must grab the real
+        # position point from the path data.
+        center_pt = path_pos_points[create_from_point]
+        radius = prev_radius + 0 * (random.random() - 0.5)
         prev_radius = radius
         contour.SetCtrlPtsByRadius(center_pt, radius)
 
@@ -42,7 +55,7 @@ def create_solid_from_path(src_path_name, starting_radius):
         Geom.SampleLoop(id, num_samples, new_id)
 
     # Loft the resampled contours.
-    path_lofted_name = path_name + "_lofted"
+    path_lofted_name = src_path_name + "_lofted"
     num_contours = len(path_ctrs_pds_rspl) * 4  # Including endpoints, how many contours to interpolate between the end caps.
     num_linear_pts_along_length = 120           # ?
     num_modes = 20                              # ?
@@ -55,7 +68,7 @@ def create_solid_from_path(src_path_name, starting_radius):
     # Create a new solid from the lofted solid.
     Solid.SetKernel('PolyData')
     solid = Solid.pySolidModel()
-    path_solid_name = path_name + "_solid"
+    path_solid_name = src_path_name + "_solid"
     solid.NewObject(path_solid_name)
     # Cap the lofted volume.
     path_lofted_capped_name = path_lofted_name + "_capped"
@@ -72,6 +85,10 @@ def create_solid_from_path(src_path_name, starting_radius):
 
     return path_solid_pd_name
 
+#
+# Initialize the first path.
+#
+
 # Create new path object.
 path1_name = 'path1'
 path1 = Path.pyPath()
@@ -81,12 +98,16 @@ path1.NewObject(path1_name)
 path1.AddPoint([0.0, 0.0, 0.0])
 path1.AddPoint([0.0, 0.0, 10.0])
 path1.AddPoint([0.0, 0.0, 20.0])
-path1.AddPoint([1.0, 0.0, 30.0])
+path1.AddPoint([5.0, 0.0, 30.0])
 path1.AddPoint([0.0, 0.0, 40.0])
 path1.AddPoint([0.0, 0.0, 50.0])
 path1.AddPoint([0.0, 0.0, 60.0])
 # Generate the path from the added control points.
 path1.CreatePath()
+
+#
+# Initialize the second path.
+#
 
 # Create new path object.
 path2_name = 'path2'
@@ -94,13 +115,11 @@ path2 = Path.pyPath()
 path2.NewObject(path2_name)
 
 # Give it some points.
-path2.AddPoint([0.0, 100.0, 0.0])
-path2.AddPoint([0.0, 100.0, 10.0])
-path2.AddPoint([0.0, 100.0, 20.0])
-path2.AddPoint([1.0, 100.0, 30.0])
-path2.AddPoint([0.0, 100.0, 40.0])
-path2.AddPoint([0.0, 100.0, 50.0])
-path2.AddPoint([0.0, 100.0, 60.0])
+path2.AddPoint([25.0, 0.0, 48.0])
+path2.AddPoint([20.0, 0.0, 42.5])
+path2.AddPoint([15.0, 0.0, 37.5])
+path2.AddPoint([10.0, 0.0, 32.5])
+path2.AddPoint([3.0, 0.0, 25.0])
 # Generate the path from the added control points.
 path2.CreatePath()
 
@@ -108,13 +127,26 @@ path2.CreatePath()
 path1_solid_name = create_solid_from_path(path1_name, 5.0)
 path2_solid_name = create_solid_from_path(path2_name, 5.0)
 
+# # Render this all to a viewer.
+# window_name = 'contour_to_lofted_model.py'
+# ren, renwin = vis.initRen(window_name)
+# actor1 = vis.pRepos(ren, path1_solid_name)
+# actor2 = vis.pRepos(ren, path2_solid_name)
+# # Set the renderer to draw the solids as a wireframe.
+# vis.polyDisplayWireframe(ren, path1_solid_name)
+# vis.polyDisplayWireframe(ren, path2_solid_name)
+
+merged_solid_name = "merged_solid"
+Geom.Union(path1_solid_name, path2_solid_name, merged_solid_name)
+
+merged_solid_cleaned_name = merged_solid_name + "_cleaned"
+Geom.Local_laplacian_smooth(merged_solid_name, merged_solid_cleaned_name)
+
 # Render this all to a viewer.
 window_name = 'contour_to_lofted_model.py'
 ren, renwin = vis.initRen(window_name)
-actor1 = vis.pRepos(ren, path1_solid_name)
-actor2 = vis.pRepos(ren, path2_solid_name)
+actor1 = vis.pRepos(ren, merged_solid_cleaned_name)
 # Set the renderer to draw the solids as a wireframe.
-vis.polyDisplayWireframe(ren, path1_solid_name)
-vis.polyDisplayWireframe(ren, path2_solid_name)
+vis.polyDisplayWireframe(ren, merged_solid_cleaned_name)
 
 vis.interact(ren, 15000)
