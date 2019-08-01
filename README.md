@@ -12,7 +12,7 @@ The scripts in this repository are demos and examples for how to use the [SimVas
   - Run in SV GUI
 - `contour_radii.py`: Tool to calculate statistics regarding the radius of a segmentation.
   - Run in SV GUI
-- `contour_to_lofted_model.py`: Demo for how to create a simple Y lofted solid intersection from scratch. From paths to contours to lofted surface to solid to blended solids. (***CURRENTLY BROKEN***)
+- `contour_to_lofted_model.py`: Demo for how to create a simple Y lofted solid intersection from scratch. From paths to contours to lofted surface to solid to blended solids. (***CURRENTLY SEMI-UNFINISHED***)
   - Run in SV CLI (`sv --python -- <file path>`)
 - `path_length.py`: Tool to calculate the total arc length along a centerline path.
   - Run in SV GUI

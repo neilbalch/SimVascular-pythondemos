@@ -19,7 +19,7 @@ def create_solid_from_path(src_path_name, initial_radius):
     path_pos_points = path.GetPathPosPts()
 
     # Create contours from the points.
-    kernel = 'Circle'
+    kernel = "Circle"
     Contour.SetContourKernel(kernel)
 
     prev_radius = initial_radius # Last radius from which to add/subtract a random number.
@@ -29,7 +29,7 @@ def create_solid_from_path(src_path_name, initial_radius):
         contour = Contour.pyContour()
 
         # Create a new blank contour object.
-        path_contour_name = src_path_name + '-contour' + str(id * 10)
+        path_contour_name = src_path_name + "-contour" + str(id * 10)
         create_from_point = id * 10
         contour.NewObject(path_contour_name, src_path_name, create_from_point)
 
@@ -37,7 +37,7 @@ def create_solid_from_path(src_path_name, initial_radius):
         # center must be defined in absolute 3D space, so we must grab the real
         # position point from the path data.
         center_pt = path_pos_points[create_from_point]
-        radius = prev_radius + 0 * (random.random() - 0.5)
+        radius = prev_radius + 0.5 * (random.random() - 0.5)
         prev_radius = radius
         contour.SetCtrlPtsByRadius(center_pt, radius)
 
@@ -90,7 +90,7 @@ def create_solid_from_path(src_path_name, initial_radius):
 #
 
 # Create new path object.
-path1_name = 'path1'
+path1_name = "path1"
 path1 = Path.pyPath()
 path1.NewObject(path1_name)
 
@@ -110,7 +110,7 @@ path1.CreatePath()
 #
 
 # Create new path object.
-path2_name = 'path2'
+path2_name = "path2"
 path2 = Path.pyPath()
 path2.NewObject(path2_name)
 
@@ -127,26 +127,36 @@ path2.CreatePath()
 path1_solid_name = create_solid_from_path(path1_name, 5.0)
 path2_solid_name = create_solid_from_path(path2_name, 5.0)
 
-# # Render this all to a viewer.
-# window_name = 'contour_to_lofted_model.py'
-# ren, renwin = vis.initRen(window_name)
-# actor1 = vis.pRepos(ren, path1_solid_name)
-# actor2 = vis.pRepos(ren, path2_solid_name)
-# # Set the renderer to draw the solids as a wireframe.
-# vis.polyDisplayWireframe(ren, path1_solid_name)
-# vis.polyDisplayWireframe(ren, path2_solid_name)
-
 merged_solid_name = "merged_solid"
 Geom.Union(path1_solid_name, path2_solid_name, merged_solid_name)
 
-merged_solid_cleaned_name = merged_solid_name + "_cleaned"
-Geom.Local_laplacian_smooth(merged_solid_name, merged_solid_cleaned_name)
+# Render this all to a viewer.
+window_name = "RAW Model"
+ren1, renwin1 = vis.initRen(window_name)
+# actor1 = vis.pRepos(ren, merged_solid_cleaned_name)
+actor1 = vis.pRepos(ren1, merged_solid_name)
+# Set the renderer to draw the solids as a wireframe.
+# vis.polyDisplayWireframe(ren, merged_solid_cleaned_name)
+
+# TODO: Figure out how to effectively smooth over the model.
+
+merged_solid_smoothed_name = merged_solid_name + "_cleaned"
+Geom.Local_laplacian_smooth(merged_solid_name, merged_solid_smoothed_name, 500, 0.04)
+
+# Solid.SetKernel("PolyData")
+# solid = Solid.pySolidModel()
+# solid.NewObject(merged_solid_name)
+# merged_solid_faceIDs = solid.GetFaceIDs()
+# for id in range(len(merged_solid_faceIDs) - 1):
+#     solid.CreateEdgeBlend(merged_solid_faceIDs[id], merged_solid_faceIDs[id + 1],
+#                           0.25)
 
 # Render this all to a viewer.
-window_name = 'contour_to_lofted_model.py'
-ren, renwin = vis.initRen(window_name)
-actor1 = vis.pRepos(ren, merged_solid_cleaned_name)
+window_name = "PATCHED Model"
+ren2, renwin2 = vis.initRen(window_name)
+actor2 = vis.pRepos(ren2, merged_solid_smoothed_name)
 # Set the renderer to draw the solids as a wireframe.
-vis.polyDisplayWireframe(ren, merged_solid_cleaned_name)
+# vis.polyDisplayWireframe(ren, merged_solid_cleaned_name)
 
-vis.interact(ren, 15000)
+vis.interact(ren1, 15000)
+vis.interact(ren2, 15000)
