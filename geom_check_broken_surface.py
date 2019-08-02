@@ -3,14 +3,14 @@ import sv_vis as vis
 import random, os
 
 # ##############################################################################
-# This script is a demo for how to work through the workflow of creating a path
-# then creating segmentations from it and lofting the segmentations for form
-# unioned models. Smoothing is a TODO and hasn't been worked out yet...
+# This script is a demo for how to check a lofted surface for being open (having
+# gaps in the surface at joints), making use of a definitely open set of merged
+# surfaces for reference.
 # ##############################################################################
 
 #
-# Creates a lofted solid from the provided source path with circular contours
-# with radii +/- 0.25 from initial_radius.
+# Creates a lofted surface from the provided source path with circular contours
+# with radii +/- little value from initial_radius.
 #
 # Args:
 #  src_path_name (String): Name of the source path.
@@ -18,7 +18,7 @@ import random, os
 # Returns:
 #  String: Name of the resulting lofted solid.
 
-def create_solid_from_path(src_path_name, initial_radius):
+def create_surface_from_path(src_path_name, initial_radius):
     # Load in the source path and store the position points.
     path = Path.pyPath()
     path.GetObject(src_path_name)
@@ -43,7 +43,7 @@ def create_solid_from_path(src_path_name, initial_radius):
         # center must be defined in absolute 3D space, so we must grab the real
         # position point from the path data.
         center_pt = path_pos_points[create_from_point]
-        radius = prev_radius + 0.5 * (random.random() - 0.5)
+        radius = prev_radius + 0 * (random.random() - 0.5)
         prev_radius = radius
         contour.SetCtrlPtsByRadius(center_pt, radius)
 
@@ -71,25 +71,7 @@ def create_solid_from_path(src_path_name, initial_radius):
                   num_contours, num_linear_pts_along_length, num_modes,
                   use_FFT, use_linear_sample_along_length)
 
-    # Create a new solid from the lofted solid.
-    Solid.SetKernel('PolyData')
-    solid = Solid.pySolidModel()
-    path_solid_name = src_path_name + "_solid"
-    solid.NewObject(path_solid_name)
-    # Cap the lofted volume.
-    path_lofted_capped_name = path_lofted_name + "_capped"
-    VMTKUtils.Cap_with_ids(path_lofted_name, path_lofted_capped_name, 0, 0)
-    solid.SetVtkPolyData(path_lofted_capped_name)
-    num_triangles_on_cap = 150
-    solid.GetBoundaryFaces(num_triangles_on_cap)
-
-    # Export the solid to a polydata object.
-    path_solid_pd_name = path_solid_name + "_pd"
-    solid.GetPolyData(path_solid_pd_name)
-
-    # solid.WriteNative(os.getcwd() + "/" + path_solid_name + ".vtp")
-
-    return path_solid_pd_name
+    return path_lofted_name
 
 #
 # Initialize the first path.
@@ -101,13 +83,10 @@ path1 = Path.pyPath()
 path1.NewObject(path1_name)
 
 # Give it some points.
-path1.AddPoint([0.0, 0.0, 0.0])
-path1.AddPoint([0.0, 0.0, 10.0])
-path1.AddPoint([0.0, 0.0, 20.0])
-path1.AddPoint([5.0, 0.0, 30.0])
-path1.AddPoint([0.0, 0.0, 40.0])
-path1.AddPoint([0.0, 0.0, 50.0])
-path1.AddPoint([0.0, 0.0, 60.0])
+path1.AddPoint([2.0, 2.0, 0.0])
+path1.AddPoint([3.0, 3.0, 0.0])
+path1.AddPoint([4.0, 4.0, 0.0])
+path1.AddPoint([5.0, 5.0, 0.0])
 # Generate the path from the added control points.
 path1.CreatePath()
 
@@ -121,48 +100,33 @@ path2 = Path.pyPath()
 path2.NewObject(path2_name)
 
 # Give it some points.
-path2.AddPoint([25.0, 0.0, 48.0])
-path2.AddPoint([20.0, 0.0, 42.5])
-path2.AddPoint([15.0, 0.0, 37.5])
-path2.AddPoint([10.0, 0.0, 32.5])
-path2.AddPoint([3.0, 0.0, 25.0])
+path2.AddPoint([0.0, 0.0, 0.0])
+path2.AddPoint([0.0, 1.0, 0.0])
+path2.AddPoint([0.0, 2.0, 0.0])
+path2.AddPoint([0.0, 3.0, 0.0])
+path2.AddPoint([0.0, 4.0, 0.0])
 # Generate the path from the added control points.
 path2.CreatePath()
 
-# Create solids from the paths.
-path1_solid_name = create_solid_from_path(path1_name, 5.0)
-path2_solid_name = create_solid_from_path(path2_name, 5.0)
+# Create surfaces from the paths.
+path1_surface_name = create_surface_from_path(path1_name, 1.0)
+path2_surface_name = create_surface_from_path(path2_name, 2.0)
 
 merged_solid_name = "merged_solid"
-Geom.Union(path1_solid_name, path2_solid_name, merged_solid_name)
+Geom.Union(path1_surface_name, path2_surface_name, merged_solid_name)
+
+info = Geom.Checksurface(merged_solid_name)
+print(info)
+print("[geom_check_broken_surface] Num free edges: " + str(info[0]))
+print("[geom_check_broken_surface] Num bad edges: " + str(info[1]))
+if info[1] != 0:
+    print(("[geom_check_broken_surface]\tHey! This model contains an open"
+           " surface and shouldn't be used!"))
 
 # Render this all to a viewer.
-window_name = "RAW Model"
+window_name = "MERGED Model"
 ren1, renwin1 = vis.initRen(window_name)
-# actor1 = vis.pRepos(ren, merged_solid_cleaned_name)
 actor1 = vis.pRepos(ren1, merged_solid_name)
 # Set the renderer to draw the solids as a wireframe.
 # vis.polyDisplayWireframe(ren, merged_solid_cleaned_name)
-
-# TODO: Figure out how to effectively smooth over the model.
-
-merged_solid_smoothed_name = merged_solid_name + "_cleaned"
-Geom.Local_laplacian_smooth(merged_solid_name, merged_solid_smoothed_name, 500, 0.04)
-
-# Solid.SetKernel("PolyData")
-# solid = Solid.pySolidModel()
-# solid.NewObject(merged_solid_name)
-# merged_solid_faceIDs = solid.GetFaceIDs()
-# for id in range(len(merged_solid_faceIDs) - 1):
-#     solid.CreateEdgeBlend(merged_solid_faceIDs[id], merged_solid_faceIDs[id + 1],
-#                           0.25)
-
-# Render this all to a viewer.
-window_name = "PATCHED Model"
-ren2, renwin2 = vis.initRen(window_name)
-actor2 = vis.pRepos(ren2, merged_solid_smoothed_name)
-# Set the renderer to draw the solids as a wireframe.
-# vis.polyDisplayWireframe(ren, merged_solid_cleaned_name)
-
 vis.interact(ren1, 15000)
-vis.interact(ren2, 15000)
