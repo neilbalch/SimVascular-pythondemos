@@ -133,8 +133,10 @@ cube.GetPolyData(cube_name_pd)
 #           BEGIN GEOM API DEMO
 # ######################################
 
+# ERR: VtkUtils_GetLines failed ?
 # print("\n[geom_stats_demo] Geom.NumClosedLineRegions()")
-# result = Geom.NumClosedLineRegions(merged_solid_name)
+# # result = Geom.NumClosedLineRegions(merged_solid_name_pd)
+# result = Geom.NumClosedLineRegions(cube_name_pd)
 # print("[geom_stats_demo] \tResult: " + str(result))
 
 print("\n[geom_stats_demo] Geom.Translate()")
@@ -147,13 +149,15 @@ scale_factor = 2.0
 scaled_solid_name = merged_solid_name_pd + "_scaled"
 Geom.ScaleAvg(merged_solid_name_pd, scale_factor, scaled_solid_name)
 
+# ERR: VtkUtils_GetLines failed ?
 # print("\n[geom_stats_demo] Geom.GetOrderedPts()")
-# result = Geom.GetOrderedPts(merged_solid_name)
+# # result = Geom.GetOrderedPts(merged_solid_name_pd)
+# result = Geom.GetOrderedPts(cube_name_pd)
 # print("[geom_stats_demo] \tResult: " + str(result))
 
 print("\n[geom_stats_demo] Geom.PolysClosed()")
 result = Geom.PolysClosed(cube_name_pd)
-print("\n[geom_stats_demo] \tResult: " + str(result))
+print("[geom_stats_demo] \tResult: " + str(result))
 
 print("\n[geom_stats_demo] Geom.SurfArea()")
 result = Geom.SurfArea(cube_name_pd)
@@ -176,11 +180,18 @@ result = Geom.Classify(merged_solid_name_pd, point)
 print("[geom_stats_demo] \tResult: " + str(result))
 
 # RR: sys_geom_Get2DPgon called with non-planar input cvPolyData ?
-# print("\n[geom_stats_demo] Geom.PtInPoly()")
-# point = [0.0, 0.0]
-# use_previous_polygon = False
-# result = Geom.PtInPoly(merged_solid_name, point, use_previous_polygon)
-# print("[geom_stats_demo] \tResult: " + str(result))
+print("\n[geom_stats_demo] Geom.PtInPoly()")
+cube.GetRegionIds()
+faces_list = cube.GetFaceIds()
+print("faces_list:")
+print(faces_list)
+face_pd_name = "cube_face"
+cube.GetFacePolyData(face_pd_name, faces_list[0])
+
+point = [0.0, 0.0]
+use_previous_polygon = False
+result = Geom.PtInPoly(face_pd_name, point, use_previous_polygon)
+print("[geom_stats_demo] \tResult: " + str(result))
 
 print("\n[geom_stats_demo] Geom.NumPts()")
 result = Geom.NumPts(merged_solid_name_pd)
@@ -208,8 +219,8 @@ print("\n[geom_stats_demo] Geom.Clean()")
 cleaned_name = merged_solid_name_pd + "_cleaned"
 Geom.Clean(merged_solid_name_pd, cleaned_name)
 
-# current kernel is not valid (6) ?
-# print("\n[geom_stats_demo] Geom.All_union()")
-# inter_t = True
-# destination_name = merged_solid_name + "_merged_again"
-# result = Geom.All_union([path1_surface_name, path2_surface_name], inter_t, destination_name)
+# Sometimes errors out with: "current kernel is not valid (6)" ?
+print("\n[geom_stats_demo] Geom.All_union()")
+inter_t = True
+destination_name = merged_solid_name_pd + "_merged_again"
+result = Geom.All_union([path1_surface_name, path2_surface_name], inter_t, destination_name)
