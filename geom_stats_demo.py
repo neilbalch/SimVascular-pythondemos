@@ -179,19 +179,20 @@ point = [0.0, 0.0, 0.0]
 result = Geom.Classify(merged_solid_name_pd, point)
 print("[geom_stats_demo] \tResult: " + str(result))
 
+# TODO(Dave or other): SolidModel.GetRegionIds() relies on an unimplemented function.
 # RR: sys_geom_Get2DPgon called with non-planar input cvPolyData ?
-print("\n[geom_stats_demo] Geom.PtInPoly()")
-cube.GetRegionIds()
-faces_list = cube.GetFaceIds()
-print("faces_list:")
-print(faces_list)
-face_pd_name = "cube_face"
-cube.GetFacePolyData(face_pd_name, faces_list[0])
+# print("\n[geom_stats_demo] Geom.PtInPoly()")
+# cube.GetRegionIds()
+# faces_list = cube.GetFaceIds()
+# print("faces_list:")
+# print(faces_list)
+# face_pd_name = "cube_face"
+# cube.GetFacePolyData(face_pd_name, faces_list[0])
 
-point = [0.0, 0.0]
-use_previous_polygon = False
-result = Geom.PtInPoly(face_pd_name, point, use_previous_polygon)
-print("[geom_stats_demo] \tResult: " + str(result))
+# point = [0.0, 0.0]
+# use_previous_polygon = False
+# result = Geom.PtInPoly(face_pd_name, point, use_previous_polygon)
+# print("[geom_stats_demo] \tResult: " + str(result))
 
 print("\n[geom_stats_demo] Geom.NumPts()")
 result = Geom.NumPts(merged_solid_name_pd)
@@ -224,3 +225,16 @@ print("\n[geom_stats_demo] Geom.All_union()")
 inter_t = True
 destination_name = merged_solid_name_pd + "_merged_again"
 result = Geom.All_union([path1_surface_name, path2_surface_name], inter_t, destination_name)
+
+print("\n[geom_stats_demo] Geom.Intersect()")
+intersected_solid_name = "intersected_solid"
+Geom.Intersect(merged_solid_name_pd, cube_name_pd, intersected_solid_name)
+# TODO(Neil): Figure out how to visualize this model. How to get it into a solid model object?
+Solid.SetKernel('PolyData')
+solid = Solid.pySolidModel()
+solid.GetModel(intersected_solid_name)
+
+print("\n[geom_stats_demo] Geom.Intersect()")
+subtracted_solid_name = "subtracted_solid"
+Geom.Subtract(merged_solid_name_pd, cube_name_pd, subtracted_solid_name)
+# TODO(Neil): Figure out how to visualize this model. How to get it into a solid model object?
