@@ -230,11 +230,24 @@ print("\n[geom_stats_demo] Geom.Intersect()")
 intersected_solid_name = "intersected_solid"
 Geom.Intersect(merged_solid_name_pd, cube_name_pd, intersected_solid_name)
 # TODO(Neil): Figure out how to visualize this model. How to get it into a solid model object?
-Solid.SetKernel('PolyData')
-solid = Solid.pySolidModel()
-solid.GetModel(intersected_solid_name)
+window_name = "INTERSECTED Model"
+ren1, renwin1 = vis.initRen(window_name)
+actor1 = vis.pRepos(ren1, intersected_solid_name)
+# Set the renderer to draw the solids as a wireframe.
+vis.polyDisplayWireframe(ren1, intersected_solid_name)
 
-print("\n[geom_stats_demo] Geom.Intersect()")
+print("\n[geom_stats_demo] Geom.Subtract()")
 subtracted_solid_name = "subtracted_solid"
 Geom.Subtract(merged_solid_name_pd, cube_name_pd, subtracted_solid_name)
 # TODO(Neil): Figure out how to visualize this model. How to get it into a solid model object?
+window_name = "SUBTRACTED Model"
+ren2, renwin2 = vis.initRen(window_name)
+actor2 = vis.pRepos(ren2, subtracted_solid_name)
+# Set the renderer to draw the solids as a wireframe.
+vis.polyDisplayWireframe(ren2, subtracted_solid_name)
+
+print("Surf Area:")
+print(str(Geom.SurfArea(subtracted_solid_name)))
+
+vis.interact(ren1, 15000)
+vis.interact(ren2, 15000)
