@@ -113,8 +113,14 @@ path2.CreatePath()
 path1_surface_name = create_surface_from_path(path1_name, 1.0)
 path2_surface_name = create_surface_from_path(path2_name, 2.0)
 
+path1_cap_surface_name = path1_surface_name + "_capped"
+path2_cap_surface_name = path2_surface_name + "_capped"
+VMTKUtils.Cap_with_ids(path1_surface_name, path1_cap_surface_name, 0, 0)
+VMTKUtils.Cap_with_ids(path2_surface_name, path2_cap_surface_name, 0, 0)
+
 merged_solid_name_pd = "merged_solid"
-Geom.Union(path1_surface_name, path2_surface_name, merged_solid_name_pd)
+# Geom.Union(path1_surface_name, path2_surface_name, merged_solid_name_pd)
+Geom.Union(path1_cap_surface_name, path2_cap_surface_name, merged_solid_name_pd)
 
 #
 # Initialize alternate cube testing platform.
@@ -245,9 +251,6 @@ ren2, renwin2 = vis.initRen(window_name)
 actor2 = vis.pRepos(ren2, subtracted_solid_name)
 # Set the renderer to draw the solids as a wireframe.
 vis.polyDisplayWireframe(ren2, subtracted_solid_name)
-
-print("Surf Area:")
-print(str(Geom.SurfArea(subtracted_solid_name)))
 
 vis.interact(ren1, 15000)
 vis.interact(ren2, 15000)
