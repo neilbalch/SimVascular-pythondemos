@@ -18,6 +18,8 @@ The scripts in this repository are demos and examples for how to use the [SimVas
   - Run in SV CLI (`sv --python -- <file path>`)
 - `geom_stats_demo.py`: Demo of the various features offered by the `Geom.xyz` API set.
   - Run in SV CLI (`sv --python -- <file path>`)
+- `mesh_stats_demo.py`: Demo of the various features offered bt the meshing API set.
+  - Run in SV CLI (`sv --python -- <file path>`)
 - `path_length.py`: Tool to calculate the total arc length along a centerline path.
   - Run in SV GUI
 - `writeToCSV.py`: Debug tool to aid in graphing bad data.
