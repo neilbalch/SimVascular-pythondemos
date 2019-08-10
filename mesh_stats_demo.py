@@ -3,9 +3,7 @@ import sv_vis as vis
 import random, os
 
 # ##############################################################################
-# This script is a demo for how to work through the workflow of creating a path
-# then creating segmentations from it and lofting the segmentations for form
-# unioned models. Smoothing is a TODO and hasn"t been worked out yet...
+# This script is a demo of the meshing API and its assorted options.
 # ##############################################################################
 
 #
