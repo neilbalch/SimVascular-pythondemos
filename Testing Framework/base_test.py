@@ -20,14 +20,15 @@ class BaseTest:
         except Exception as err:
             if type(err) == expected_error:
                 return [True, visible_name + " failed as expected with error: \""
-                         + str(err) + "\""]
+                        + str(err) + "\""]
             else:
                 return [False, visible_name + " failed with: \"" + str(err)
                         + "\", when: \"" + str(expected_error) + "\" was expected!"]
         else:
             if expected_error != None:
-                return [False, visible_name + " didn't fail with error: \"" +
-                        str(expected_error) + "\"!"]
+                return [False, visible_name + " didn't fail with error: \""
+                        + str(expected_error) + "\", instead returning: \""
+                        + str(result) + "\"!"]
             elif result != expected_return:
                 return [False, visible_name + " returned: \"" + str(result)
                         + "\", when: \"" + str(expected_return) + "\" was expected!"]
