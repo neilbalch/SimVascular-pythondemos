@@ -1,3 +1,5 @@
+import math
+
 class BaseTest:
     def __init__(self, name):
         """
@@ -22,6 +24,23 @@ class BaseTest:
         # List of tests to complete.
         self.tests_list = []
         self.name = name
+        self.required_decimal_accuracy = 0.001
+
+    def within_required_decimal_range(self, output, expected_return):
+        """
+        Private, internal method. Try not to call externally.
+
+        Args:
+            output: Value to be tested.
+            expected_return: Specified correct value.
+
+        Returns:
+            Tuple: [Pass/Fail boolean, message]
+
+        Raises:
+            Nothing.
+        """
+        return abs(expected_return - output) < self.required_decimal_accuracy
 
     def test_func(self, visible_name, func, args_list, expected_error,
                   expected_return):
@@ -57,20 +76,23 @@ class BaseTest:
                 return [False, visible_name + " didn't fail with error: \""
                         + str(expected_error) + "\", instead returning: \""
                         + str(result) + "\"!"]
-            elif result != expected_return:
-                return [False, visible_name + " returned: \"" + str(result)
-                        + "\", when: \"" + str(expected_return) + "\" was expected!"]
-            else:
+            elif type(result) == type(math.pi):
+                if self.within_required_decimal_range(result, expected_return):
+                    return [True, visible_name + " returned: \"" + str(result)
+                            + "\" as expected."]
+                else:
+                    return [False, visible_name + " returned: \"" + str(result)
+                            + "\", which isn't within: \""
+                            + str(self.required_decimal_accuracy) + "\" of: \""
+                            + str(expected_return) + "\"!"]
+            # TODO(Neil): Add method for comparing individual elements in lists.
+            elif result == expected_return:
                 return [True, visible_name + " returned: \"" + str(result)
                         + "\" as expected."]
+            else:
+                return [False, visible_name + " returned: \"" + str(result)
+                        + "\", when: \"" + str(expected_return) + "\" was expected!"]
 
-    # Adds a function test to the list.
-    # visible_name (string): Short, descriptive name for what the test does.
-    #                        e.g. "divide by zero" or "add_item() no args"
-    # func (function pointer): Function to run to execute the test.
-    # args_list (tuple): List of arguments to pass into `func` to execute the test.
-    # expected_error (Exception, optional): Is the function known to throw an error?
-    # expected_return (anything, optional): Is the function supposed to return something?
     def add_func_test(self, visible_name, func, args_list, expected_error = None,
                  expected_return = None):
         """
@@ -93,7 +115,21 @@ class BaseTest:
         self.tests_list.append([visible_name, func, args_list, expected_error,
                                 expected_return])
 
-    # Runs the list of tests (added using self.add_func_test()).
+    def set_required_decimal_accuracy(self, required_accuracy):
+        """
+        Sets the required minimum accuracy for tests with decimal return types.
+
+        Args:
+            required_accuracy: Minimum required accuracy. e.g. 0.001 or 0.0005
+
+        Returns:
+            Nothing.
+
+        Raises:
+            Nothing.
+        """
+        self.required_decimal_accuracy = required_accuracy
+
     def run_tests(self):
         """
         Method to run all of the pre-specified tests. Prints output to the
