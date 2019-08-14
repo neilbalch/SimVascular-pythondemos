@@ -35,7 +35,7 @@ test.set_required_decimal_accuracy(1)
 test.add_func_test("Area", contour.Area, [], expected_return=area)
 perimeter = 2 * math.pi * radius
 test.add_func_test("Perimeter", contour.Perimeter, [], expected_return=perimeter)
-# TODO: This aPI function really should return a list, not a string.
+# TODO: This API function really should return a list, not a string.
 center_str = "(" + str(points[0][0]) + "000,-" + str(points[0][1]) + "000," + str(points[0][2]) + "000)"
 test.add_func_test("Center", contour.Center, [], expected_return=center_str)
 
