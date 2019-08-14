@@ -72,10 +72,18 @@ class BaseTest:
                 return [False, visible_name + " failed with: \"" + str(err)
                         + "\", when: \"" + str(expected_error) + "\" was expected!"]
         else:
+            # If there was an expected exception...
             if expected_error != None:
                 return [False, visible_name + " didn't fail with error: \""
                         + str(expected_error) + "\", instead returning: \""
                         + str(result) + "\"!"]
+            # If the actual and expected returns don't share the same type...
+            elif type(result) != type(expected_return):
+                return [False, visible_name + " returned: \"" + str(result)
+                        + "\" (type: \"" + str(type(result)) + "\") when: \""
+                        + str(expected_return) + "\" was expected (type: \""
+                        + str(type(expected_return)) + "\")!"]
+            # If result is of type decimal...
             elif type(result) == type(math.pi):
                 if self.within_required_decimal_range(result, expected_return):
                     return [True, visible_name + " returned: \"" + str(result)
@@ -85,10 +93,17 @@ class BaseTest:
                             + "\", which isn't within: \""
                             + str(self.required_decimal_accuracy) + "\" of: \""
                             + str(expected_return) + "\"!"]
-            # TODO(Neil): Add method for comparing individual elements in lists.
+            # If result is of type list and the lists aren't of the same length...
+            elif (type(result) == type([])) and (len(result) != len(expected_return)):
+                return [False, visible_name + " returned: \"" + str(result)
+                        + "\" (length: \"" + str(len(result)) + "\") when: \""
+                        + str(expected_return) + "\" was expected (length: \""
+                        + str(len(expected_return)) + "\")!"]
+            # If everything went according to plan...
             elif result == expected_return:
                 return [True, visible_name + " returned: \"" + str(result)
                         + "\" as expected."]
+            # Generic error...
             else:
                 return [False, visible_name + " returned: \"" + str(result)
                         + "\", when: \"" + str(expected_return) + "\" was expected!"]
