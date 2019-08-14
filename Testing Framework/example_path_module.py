@@ -43,6 +43,7 @@ path.CreatePath()
 
 test_name = "SimVascular Path API"
 test = base_test.BaseTest(test_name)
+test.add_func_test("Path exists", Repository.Exists, [path_name], expected_return=True)
 test.add_func_test("get_path_length", get_path_length, [path_name], expected_return=2.0)
 test.add_func_test("GetControlPts", path.GetControlPts, [], expected_return=points)
 new_points = points[:1] + points[2:]

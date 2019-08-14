@@ -17,10 +17,10 @@ kernel = 'Circle'
 Contour.SetContourKernel(kernel)
 contour = Contour.pyContour()
 
-obj_name = 'test'
+contour_name = 'test'
 src_data_name = path_name
 path_pt_to_use = 0
-contour.NewObject(obj_name, src_data_name, path_pt_to_use)
+contour.NewObject(contour_name, src_data_name, path_pt_to_use)
 
 center_pt = [0, 0, 0] # This is the center of the coordinate system as defined
                       # by the path points.
@@ -29,6 +29,7 @@ contour.SetCtrlPtsByRadius(center_pt, radius)
 
 test_name = "SimVascular Contour/Segmentation API"
 test = base_test.BaseTest(test_name)
+test.add_func_test("Contour exists", Repository.Exists, [contour_name], expected_return=True)
 area = math.pi * pow(radius, 2)
 # TODO: Why does this need to be true?
 test.set_required_decimal_accuracy(1.0)
