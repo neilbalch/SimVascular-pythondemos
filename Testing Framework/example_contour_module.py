@@ -31,7 +31,7 @@ test_name = "SimVascular Contour/Segmentation API"
 test = base_test.BaseTest(test_name)
 area = math.pi * pow(radius, 2)
 # TODO: Why does this need to be true?
-test.set_required_decimal_accuracy(1)
+test.set_required_decimal_accuracy(1.0)
 test.add_func_test("Area", contour.Area, [], expected_return=area)
 perimeter = 2 * math.pi * radius
 test.add_func_test("Perimeter", contour.Perimeter, [], expected_return=perimeter)

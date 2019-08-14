@@ -87,11 +87,12 @@ class BaseTest:
             elif type(result) == type(math.pi):
                 if self.within_required_decimal_range(result, expected_return):
                     return [True, visible_name + " returned: \"" + str(result)
-                            + "\" as expected."]
+                            + "\" within +/-" + str(self.required_decimal_accuracy)
+                            + " of expected output."]
                 else:
                     return [False, visible_name + " returned: \"" + str(result)
-                            + "\", which isn't within: \""
-                            + str(self.required_decimal_accuracy) + "\" of: \""
+                            + "\", which isn't within +/-"
+                            + str(self.required_decimal_accuracy) + " of: \""
                             + str(expected_return) + "\"!"]
             # If result is of type list and the lists aren't of the same length...
             elif (type(result) == type([])) and (len(result) != len(expected_return)):
