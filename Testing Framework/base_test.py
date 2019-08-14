@@ -1,6 +1,18 @@
 class BaseTest:
-    # name (string): Name of the instance, such as "Contour Module" or "Meshing Module".
     def __init__(self, name):
+        """
+        Init constructor for the class.
+
+        Args:
+            name: String name of the instance, such as "Contour Module" or
+                  "Meshing Module".
+
+        Returns:
+            Nothing.
+
+        Raises:
+            Nothing.
+        """
         fail_color = '\033[91m'
         pass_color = '\033[92m'
         end_color = '\033[0m'
@@ -11,9 +23,25 @@ class BaseTest:
         self.tests_list = []
         self.name = name
 
-    # Private, internal method. Try not to call externally.
     def test_func(self, visible_name, func, args_list, expected_error,
                   expected_return):
+        """
+        Private, internal method. Try not to call externally.
+
+        Args:
+            visible_name: Short, descriptive name for what the test does.
+                          e.g. "divide by zero" or "add_item() no args"
+            func: Pointer to the function to run for execution of the test.
+            args_list: Tuple of arguments to pass into `func` to execute the test.
+            expected_error: Is the function known to throw an error?
+            expected_return: Should the function return something?
+
+        Returns:
+            Tuple: [Pass/Fail boolean, message]
+
+        Raises:
+            Nothing.
+        """
         result = None
         try:
             result = func(*args_list)
@@ -42,14 +70,44 @@ class BaseTest:
     # func (function pointer): Function to run to execute the test.
     # args_list (tuple): List of arguments to pass into `func` to execute the test.
     # expected_error (Exception, optional): Is the function known to throw an error?
-    # expected_return (anything): Is the function supposed to return something?
+    # expected_return (anything, optional): Is the function supposed to return something?
     def add_func_test(self, visible_name, func, args_list, expected_error = None,
                  expected_return = None):
+        """
+        Method to add a test to the list for execution upon call of run_tests().
+
+        Args:
+            visible_name: Short, descriptive name for what the test does.
+                          e.g. "divide by zero" or "add_item() no args"
+            func: Pointer to the function to run for execution of the test.
+            args_list: Tuple of arguments to pass into `func` to execute the test.
+            expected_error: Is the function known to throw an error? (optional)
+            expected_return: Should the function return something? (optional)
+
+        Returns:
+            Nothing.
+
+        Raises:
+            Nothing.
+        """
         self.tests_list.append([visible_name, func, args_list, expected_error,
                                 expected_return])
 
     # Runs the list of tests (added using self.add_func_test()).
     def run_tests(self):
+        """
+        Method to run all of the pre-specified tests. Prints output to the
+        terminal.
+
+        Args:
+            Nothing.
+
+        Returns:
+            Nothing.
+
+        Raises:
+            Nothing.
+        """
         print("Running " + self.name + " tests.")
         if len(self.tests_list) is 0:
             print("There are no tests to run!")
