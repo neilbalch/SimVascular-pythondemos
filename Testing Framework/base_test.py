@@ -66,43 +66,43 @@ class BaseTest:
             result = func(*args_list)
         except Exception as err:
             if type(err) == expected_error:
-                return [True, visible_name + "\n\t failed as expected with error: \""
+                return [True, visible_name + "\n\t Failed as expected with error: \""
                         + str(err) + "\""]
             else:
-                return [False, visible_name + "\n\t failed with: \"" + str(err)
+                return [False, visible_name + "\n\t Failed with: \"" + str(err)
                         + "\", when: \"" + str(expected_error) + "\" was expected!"]
         else:
             # If there was an expected exception...
             if expected_error != None:
-                return [False, visible_name + "\n\t didn't fail with error: \""
+                return [False, visible_name + "\n\t Didn't fail with error: \""
                         + str(expected_error) + "\", instead returning: \""
                         + str(result) + "\"!"]
             # If the actual and expected returns don't share the same type...
             elif type(result) != type(expected_return):
-                return [False, visible_name + "\n\t returned: \"" + str(result)
+                return [False, visible_name + "\n\t Returned: \"" + str(result)
                         + "\" (type: \"" + str(type(result)) + "\") when: \""
                         + str(expected_return) + "\" was expected (type: \""
                         + str(type(expected_return)) + "\")!"]
             # If result is of type decimal...
             elif type(result) == type(math.pi):
                 if self.within_required_decimal_range(result, expected_return):
-                    return [True, visible_name + "\n\t returned: \"" + str(result)
-                            + "\" within +/-" + str(self.required_decimal_accuracy)
-                            + " of expected output."]
+                    return [True, visible_name + "\n\t Returned: \"" + str(result)
+                            + "\", which is within +/-" + str(self.required_decimal_accuracy)
+                            + " of the expected return."]
                 else:
-                    return [False, visible_name + "\n\t returned: \"" + str(result)
+                    return [False, visible_name + "\n\t Returned: \"" + str(result)
                             + "\", which isn't within +/-"
                             + str(self.required_decimal_accuracy) + " of: \""
                             + str(expected_return) + "\"!"]
             # If result is of type list and the lists aren't of the same length...
             elif (type(result) == type([])) and (len(result) != len(expected_return)):
-                return [False, visible_name + "\n\t returned: \"" + str(result)
+                return [False, visible_name + "\n\t Returned: \"" + str(result)
                         + "\" (length: \"" + str(len(result)) + "\") when: \""
                         + str(expected_return) + "\" was expected (length: \""
                         + str(len(expected_return)) + "\")!"]
             # If everything went according to plan...
             elif result == expected_return:
-                return [True, visible_name + "\n\t returned: \"" + str(result)
+                return [True, visible_name + "\n\t Returned: \"" + str(result)
                         + "\" as expected."]
             # Generic error...
             else:
