@@ -131,8 +131,9 @@ class BaseTest:
         Raises:
             Nothing.
         """
-        self.tests_list.append([visible_name, func, args_list, expected_error,
-                                expected_return])
+        self.tests_list.append([visible_name + "\n\t func call: " + func.__name__
+                                + "(" + ", ".join(str(item) for item in args_list) + ")",
+                                func, args_list, expected_error, expected_return])
 
     def set_required_decimal_accuracy(self, required_accuracy):
         """
