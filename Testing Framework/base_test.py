@@ -18,8 +18,10 @@ class BaseTest:
         fail_color = '\033[91m'
         pass_color = '\033[92m'
         end_color = '\033[0m'
-        self.pass_text = "[ " + pass_color + "PASS" + end_color + " ] "
-        self.fail_text = "[ " + fail_color +   "FAIL" + end_color + " ] "
+        self.pass_text_formatted = "[ " + pass_color + "PASS" + end_color + " ] "
+        self.fail_text_formatted = "[ " + fail_color + "FAIL" + end_color + " ] "
+        self.pass_text = "[ PASS ] "
+        self.fail_text = "[ FAIL ] "
 
         # List of tests to complete.
         self.tests_list = []
@@ -199,6 +201,35 @@ class BaseTest:
             return
 
         for line in self.test_output:
+            # Add in color formatting for PASS/FAIL.
+            line = line.replace(self.pass_text, self.pass_text_formatted)
+            line = line.replace(self.fail_text, self.fail_text_formatted)
             print(line)
+
+    def return_test_output(self, use_colors=True):
+        """
+        Returns output from self.run_tests() in a list of strings.
+
+        Args:
+            Nothing.
+
+        Returns:
+            Nothing.
+
+        Raises:
+            Nothing.
+        """
+        if self.test_output == []:
+            return None
+
+        if not use_colors:
+            return self.test_output
+        else:
+            # Make a deep copy of the un-colorized output.
+            colorized = self.test_output[:]
+            for i in range(len(colorized)):
+                colorized[i] = colorized[i].replace(self.pass_text, self.pass_text_formatted)
+                colorized[i] = colorized[i].replace(self.fail_text, self.fail_text_formatted)
+            return colorized
 
 

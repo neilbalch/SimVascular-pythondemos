@@ -87,102 +87,107 @@ def create_solid_from_path(src_path_name, initial_radius):
 
     return path_solid_pd_name
 
-#
-# Initialize the first path.
-#
+def mesh_tests(colors = True):
+    #
+    # Initialize the first path.
+    #
 
-# Create new path object.
-path1_name = "path1"
-path1 = Path.pyPath()
-path1.NewObject(path1_name)
+    # Create new path object.
+    path1_name = "path1"
+    path1 = Path.pyPath()
+    path1.NewObject(path1_name)
 
-# Give it some points.
-path1.AddPoint([0.0, 0.0, 0.0])
-path1.AddPoint([0.0, 0.0, 10.0])
-path1.AddPoint([0.0, 0.0, 20.0])
-path1.AddPoint([5.0, 0.0, 30.0])
-path1.AddPoint([0.0, 0.0, 40.0])
-path1.AddPoint([0.0, 0.0, 50.0])
-path1.AddPoint([0.0, 0.0, 60.0])
-# Generate the path from the added control points.
-path1.CreatePath()
+    # Give it some points.
+    path1.AddPoint([0.0, 0.0, 0.0])
+    path1.AddPoint([0.0, 0.0, 10.0])
+    path1.AddPoint([0.0, 0.0, 20.0])
+    path1.AddPoint([5.0, 0.0, 30.0])
+    path1.AddPoint([0.0, 0.0, 40.0])
+    path1.AddPoint([0.0, 0.0, 50.0])
+    path1.AddPoint([0.0, 0.0, 60.0])
+    # Generate the path from the added control points.
+    path1.CreatePath()
 
-#
-# Initialize the second path.
-#
+    #
+    # Initialize the second path.
+    #
 
-# Create new path object.
-path2_name = "path2"
-path2 = Path.pyPath()
-path2.NewObject(path2_name)
+    # Create new path object.
+    path2_name = "path2"
+    path2 = Path.pyPath()
+    path2.NewObject(path2_name)
 
-# Give it some points.
-path2.AddPoint([25.0, 0.0, 48.0])
-path2.AddPoint([20.0, 0.0, 42.5])
-path2.AddPoint([15.0, 0.0, 37.5])
-path2.AddPoint([10.0, 0.0, 32.5])
-path2.AddPoint([3.0, 0.0, 25.0])
-# Generate the path from the added control points.
-path2.CreatePath()
+    # Give it some points.
+    path2.AddPoint([25.0, 0.0, 48.0])
+    path2.AddPoint([20.0, 0.0, 42.5])
+    path2.AddPoint([15.0, 0.0, 37.5])
+    path2.AddPoint([10.0, 0.0, 32.5])
+    path2.AddPoint([3.0, 0.0, 25.0])
+    # Generate the path from the added control points.
+    path2.CreatePath()
 
-# Create solids from the paths.
-path1_solid_name = create_solid_from_path(path1_name, 5.0)
-path2_solid_name = create_solid_from_path(path2_name, 5.0)
+    # Create solids from the paths.
+    path1_solid_name = create_solid_from_path(path1_name, 5.0)
+    path2_solid_name = create_solid_from_path(path2_name, 5.0)
 
-merged_solid_name = "merged_solid"
-Geom.Union(path1_solid_name, path2_solid_name, merged_solid_name)
+    merged_solid_name = "merged_solid"
+    Geom.Union(path1_solid_name, path2_solid_name, merged_solid_name)
 
-# Write the merged solid to a temporary file.
-Solid.SetKernel("PolyData")
-solid = Solid.pySolidModel()
-solid.NewObject("temp")
-solid.SetVtkPolyData(merged_solid_name)
-temp_file_path = os.getcwd() + "/temp.vtp"
-solid.WriteNative(temp_file_path)
+    # Write the merged solid to a temporary file.
+    Solid.SetKernel("PolyData")
+    solid = Solid.pySolidModel()
+    solid.NewObject("temp")
+    solid.SetVtkPolyData(merged_solid_name)
+    temp_file_path = os.getcwd() + "/temp.vtp"
+    solid.WriteNative(temp_file_path)
 
-# Create and load mesh object.
-MeshObject.SetKernel("TetGen")
-msh = MeshObject.pyMeshObject()
-meshed_solid_name = merged_solid_name + "_meshed"
-msh.NewObject(meshed_solid_name)
-msh.LoadModel(temp_file_path)
+    # Create and load mesh object.
+    MeshObject.SetKernel("TetGen")
+    msh = MeshObject.pyMeshObject()
+    meshed_solid_name = merged_solid_name + "_meshed"
+    msh.NewObject(meshed_solid_name)
+    msh.LoadModel(temp_file_path)
 
-# Create new mesh
-msh.NewMesh()
-msh.SetMeshOptions("SurfaceMeshFlag",[1])
-msh.SetMeshOptions("VolumeMeshFlag",[1])
-msh.SetMeshOptions("GlobalEdgeSize",[0.75])
-msh.SetMeshOptions("MeshWallFirst",[1])
+    # Create new mesh
+    msh.NewMesh()
+    msh.SetMeshOptions("SurfaceMeshFlag",[1])
+    msh.SetMeshOptions("VolumeMeshFlag",[1])
+    msh.SetMeshOptions("GlobalEdgeSize",[0.75])
+    msh.SetMeshOptions("MeshWallFirst",[1])
 
-# Not working, unable to troubleshoot...
-# size = 0.2
-# radius = 4.0
-# center = [0.0, 0.0, 0.0]
-# normals = [1.0, 1.0, 1.0] # I have no idea what this does...
-# msh.SetCylinderRefinement(size, radius, center, normals)
+    # Not working, unable to troubleshoot...
+    # size = 0.2
+    # radius = 4.0
+    # center = [0.0, 0.0, 0.0]
+    # normals = [1.0, 1.0, 1.0] # I have no idea what this does...
+    # msh.SetCylinderRefinement(size, radius, center, normals)
 
-# Set a sphere refinement.
-size = 0.2
-r = 8.0
-center = [0.0, 0.0, 0.0]
-msh.SetSphereRefinement(size, r, center)
+    # Set a sphere refinement.
+    size = 0.2
+    r = 8.0
+    center = [0.0, 0.0, 0.0]
+    msh.SetSphereRefinement(size, r, center)
 
-# Generate the mesh and export polydata.
-msh.GenerateMesh()
-meshed_solid_pd_name = meshed_solid_name + "_pd"
-msh.GetPolyData(meshed_solid_pd_name)
+    # Generate the mesh and export polydata.
+    msh.GenerateMesh()
+    meshed_solid_pd_name = meshed_solid_name + "_pd"
+    msh.GetPolyData(meshed_solid_pd_name)
 
-# Export the polydata to a VTK object from the repository.
-meshed_solid_pd = Repository.ExportToVtk(meshed_solid_pd_name)
+    # Export the polydata to a VTK object from the repository.
+    meshed_solid_pd = Repository.ExportToVtk(meshed_solid_pd_name)
 
-test = base_test.BaseTest("SimVascular Meshing API")
-test.add_func_test("Path1 Exists", Repository.Exists, [path1_name], expected_return=True)
-test.add_func_test("Path2 Exists", Repository.Exists, [path2_name], expected_return=True)
-test.add_func_test("Solid Model 1 Exists", Repository.Exists, [path1_solid_name], expected_return=True)
-test.add_func_test("Solid Model 2 Exists", Repository.Exists, [path2_solid_name], expected_return=True)
-test.add_func_test("Merged Solid Model Exists", Repository.Exists, [merged_solid_name], expected_return=True)
-test.add_func_test("Mesh Exists", Repository.Exists, [meshed_solid_name], expected_return=True)
-test.add_func_test("Mesh PolyData Exists", Repository.Exists, [meshed_solid_pd_name], expected_return=True)
+    test = base_test.BaseTest("SimVascular Meshing API")
+    test.add_func_test("Path1 Exists", Repository.Exists, [path1_name], expected_return=True)
+    test.add_func_test("Path2 Exists", Repository.Exists, [path2_name], expected_return=True)
+    test.add_func_test("Solid Model 1 Exists", Repository.Exists, [path1_solid_name], expected_return=True)
+    test.add_func_test("Solid Model 2 Exists", Repository.Exists, [path2_solid_name], expected_return=True)
+    test.add_func_test("Merged Solid Model Exists", Repository.Exists, [merged_solid_name], expected_return=True)
+    test.add_func_test("Mesh Exists", Repository.Exists, [meshed_solid_name], expected_return=True)
+    test.add_func_test("Mesh PolyData Exists", Repository.Exists, [meshed_solid_pd_name], expected_return=True)
 
-test.run_tests()
-test.print_test_output()
+    test.run_tests()
+    return test.return_test_output(use_colors=colors)
+
+if __name__ == "__main__":
+    for line in mesh_tests():
+        print(line)
