@@ -55,14 +55,12 @@ for line in flattened_output:
   plain_text_msg += "\n"
 
 tests_contain_fail = False
+failed_tests = []
 
 # Make deep copy of flattened output and format it for email HTML.
 formatted_output = flattened_output[:]
+index_of_last_h3 = -1
 for i in range(len(formatted_output)):
-    # If a test failed, record that for display in the subject line.
-    if "[ FAIL ]" in formatted_output[i]:
-        tests_contain_fail = True
-
     # Color code the PASS and FAIL thingies
     formatted_output[i] = formatted_output[i].replace("[ PASS ]",
                           "[ <span style=\"color:Green\">PASS</span> ]")
@@ -71,15 +69,41 @@ for i in range(len(formatted_output)):
     # Apply header tags to the test module summary lines.
     if "Results for" in formatted_output[i]:
         formatted_output[i] = "<h3>" + formatted_output[i] + "</h3>"
-    if "tests completed:" in formatted_output[i]:
+        index_of_last_h3 = i
+    elif "tests completed:" in formatted_output[i]:
         formatted_output[i] = "<h4>" + formatted_output[i] + "</h4>"
+    else:
+        formatted_output[i] += "<br>"
+
     # Replace string \n and \t chars with HTML equivalents.
     formatted_output[i] = formatted_output[i].replace("\n", "<br>")
     formatted_output[i] = formatted_output[i].replace("\t", "&#9;")
     # Add line break to the end of every line.
-    formatted_output[i] += "<br>"
+
+    # If a test failed, record that for display in the subject line, and add it
+    # to the list.
+    if "[ <span style=\"color:Red\">FAIL</span> ]" in formatted_output[i]:
+        tests_contain_fail = True
+
+        # Has this test module already been added to the list of failed tests?
+        index_of_failed_test_module = -1
+        for index in range(len(failed_tests)):
+            if failed_tests[index] == formatted_output[index_of_last_h3]:
+                index_of_failed_test_module = index
+        # If not, add a new one
+        if index_of_failed_test_module == -1:
+            failed_tests.append([
+                formatted_output[index_of_last_h3],
+                formatted_output[i],
+            ])
+        # Else, just update what's there.
+        else:
+            failed_tests[index_of_failed_test_module].append(formatted_output[i])
+
+failed_tests = flatten_multidimensional_list(failed_tests)
 
 # print(formatted_output)
+# print(failed_tests)
 
 # Format of ./credentials.file, verbatim:
 # [GMAIL ACCOUNT EMAIL ADDRESS]
@@ -104,7 +128,10 @@ msg.add_alternative("""\
 <!DOCTYPE html>
 <html>
     <body>
-""" + "\n".join(formatted_output)
+"""
++ "".join(formatted_output)
++ "<br> <h1>List of Failed Tests:</h1>"
++ "".join(failed_tests)
 + """
     </body>
 </html>
