@@ -23,3 +23,4 @@ test.add_func_test("Cube avg point", Geom.AvgPt, [cube_name_pd], expected_error=
 
 # Run all of the tests.
 test.run_tests()
+test.print_test_output()

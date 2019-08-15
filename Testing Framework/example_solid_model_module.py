@@ -110,3 +110,4 @@ test.add_func_test("Solid Model Exists", Repository.Exists, [path_solid_name], e
 test.add_func_test("Solid Model PolyData Exists", Repository.Exists, [path_solid_pd_name], expected_return=True)
 
 test.run_tests()
+test.print_test_output()

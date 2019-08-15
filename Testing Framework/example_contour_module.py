@@ -41,3 +41,4 @@ center_str = "(" + str(points[0][0]) + "000,-" + str(points[0][1]) + "000," + st
 test.add_func_test("Center", contour.Center, [], expected_return=center_str)
 
 test.run_tests()
+test.print_test_output()

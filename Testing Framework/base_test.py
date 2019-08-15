@@ -25,6 +25,7 @@ class BaseTest:
         self.tests_list = []
         self.name = name
         self.required_decimal_accuracy = 0.001
+        self.test_output = []
 
     def within_required_decimal_range(self, output, expected_return):
         """
@@ -148,8 +149,7 @@ class BaseTest:
 
     def run_tests(self):
         """
-        Method to run all of the pre-specified tests. Prints output to the
-        terminal.
+        Method to run all of the pre-specified tests.
 
         Args:
             Nothing.
@@ -165,17 +165,40 @@ class BaseTest:
             print("There are no tests to run!")
             return
 
+        self.test_output = []
         count_failed = 0
         count_succeeded = 0
+        self.test_output.append("Results for " + self.name + " tests.")
         for test_params in self.tests_list:
             result = self.test_func(*test_params)
             if result[0]:
                 count_succeeded += 1
-                print(self.pass_text + result[1])
+                self.test_output.append(self.pass_text + result[1])
             else:
                 count_failed += 1
-                print(self.fail_text + result[1])
+                self.test_output.append(self.fail_text + result[1])
 
-        print(self.name + " tests completed: " + str(count_succeeded) + " succeeded and "
+        self.test_output.append(self.name + " tests completed: " + str(count_succeeded) + " succeeded and "
               + str(count_failed) + " failed.")
+
+    def print_test_output(self):
+        """
+        Prints output from self.run_tests() to the terminal.
+
+        Args:
+            Nothing.
+
+        Returns:
+            Nothing.
+
+        Raises:
+            Nothing.
+        """
+        if self.test_output == []:
+            print("No test output exists yet! Run base_test.run_tests() first.")
+            return
+
+        for line in self.test_output:
+            print(line)
+
 

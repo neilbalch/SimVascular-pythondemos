@@ -27,4 +27,6 @@ wrong_list = test_list + [4]
 test.add_func_test("echo", echo, [test_list], expected_return=wrong_list)
 
 # Run all of the tests.
+test.print_test_output()
 test.run_tests()
+test.print_test_output()

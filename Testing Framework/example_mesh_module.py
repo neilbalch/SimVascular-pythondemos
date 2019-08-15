@@ -185,3 +185,4 @@ test.add_func_test("Mesh Exists", Repository.Exists, [meshed_solid_name], expect
 test.add_func_test("Mesh PolyData Exists", Repository.Exists, [meshed_solid_pd_name], expected_return=True)
 
 test.run_tests()
+test.print_test_output()

@@ -50,3 +50,4 @@ new_points = points[:1] + points[2:]
 test.add_func_test("RemovePoint", remove_control_point, [path, 1], expected_return=new_points)
 
 test.run_tests()
+test.print_test_output()
