@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from sv import *
+import sv
 import vtk
 import math
 import numpy
@@ -11,82 +11,69 @@ import numpy
 # ######################################
 
 contour_group_name = 'aorta'
-contour_group_name_in_repo = contour_group_name
 contour_ids = range(0, 20)
 
 # To test this script, uncomment the following lines:
-# contour_group_name = 'test'
-# contour_group_name_in_repo = contour_group_name
-# contour_ids = range(0, 1)
+contour_group_name = 'test-seg'
+contour_ids = range(0, 1)
 
-# kernel = 'Circle'
-# Contour.SetContourKernel(kernel)
-# contour = Contour.pyContour()
+path_name = "test-path"
+path = sv.pathplanning.Path()
+path.add_control_point([0.0, 0.0, 0.0])
+path.add_control_point([0.0, 0.0, 5.0])
 
-# path_to_import = 'aorta', name_in_repo = 'aorta'
-# GUI.ExportPathToRepos(path_to_import, name_in_repo))
+segmentations = [sv.segmentation.Circle(radius = 1.0,
+                                        center = path.get_control_points()[0],
+                                        normal = path.get_curve_tangent(0))]
 
-# name_of_obj = 'test', name_of_source_data = 'aorta', path_pt_to_use = 0
-# contour.NewObject(name_of_obj, name_of_source_data, path_pt_to_use)
+center = segmentations[0].get_center()
+print("  Center: {0:g} {1:g} {2:g}".format(center[0], center[1], center[2]))
 
-# center_pt = [0, 0, 0], radius = 5
-# contour.SetCtrlPtsByRadius(center_pt, radius)
+sv.dmg.add_path(name=path_name, path=path)
+sv.dmg.add_segmentation(name=contour_group_name, path=path_name, segmentations=segmentations)
 
-# name_of_dest_obj = 'test', path_to_dest_obj = 'test'
-# GUI.ImportContoursFromRepos(name_of_dest_obj, [name_of_obj], path_to_dest_obj)
+# # Grab Contour set from the Data Manager (dmg).
+# contour_set = sv.dmg.get_segmentation(contour_group_name)
 
+# # Calculate the centers of each contour in the segmentation group with a VTK
+# # center of mass filter, then calculate the radius of the contour.
+# contour_radii = []
+# for id in contour_ids:
+#     print("id: " + str(id))
 
-# Set up a list of the names to give the contour objects when copied into the repository.
-repo_contour_ids = [contour_group_name_in_repo+"_contour_"+str(id) for id in contour_ids]
+#     # Export the current contour to a VTK polyData object.
+#     contour_pd = contour_set.get_segmentation(id).get_polydata()
+#     # Apply a VTK filter to locate the center of mass (average) of the points in the contour.
+#     com_filter = vtk.vtkCenterOfMass()
+#     com_filter.SetInputData(contour_pd)
+#     com_filter.Update()
+#     center = com_filter.GetCenter()
 
-try:
-    # Does this item already exist in the Repository?
-    if int(Repository.Exists(repo_contour_ids[0])):
-        print("[contour_radii] Contour \'" + contour_group_name_in_repo + "\' is already included in the repo... using that.")
-    else:
-        GUI.ExportContourToRepos(contour_group_name, repo_contour_ids)
+#     print("center: " + str(center))
 
-    # Calculate the centers of each contour in the segmentation group with a VTK
-    # center of mass filter, then calculate the radius of the contour.
-    contour_radii = []
-    for id in repo_contour_ids:
-        # Export the id'th contour to a VTK polyData object.
-        contour = Repository.ExportToVtk(id)
-        # Apply a VTK filter to locate the center of mass (average) of the points in the contour.
-        com_filter = vtk.vtkCenterOfMass()
-        com_filter.SetInputData(contour)
-        com_filter.Update()
-        center = com_filter.GetCenter()
+#     # Save the points in the contour to a vtkPoints object.
+#     contour_pts = contour_pd.GetPoints()
+#     # Iterate through the list of points, but not the last two. (last two are
+#     #  control points that bung up the solution)
+#     radii = []
+#     for point_index in range(contour_pts.GetNumberOfPoints() - 2):
+#         print("point_index: " + str(point_index))
+#         # Save the point to a cordinate list.
+#         coord = [0.0, 0.0, 0.0]
+#         contour_pts.GetPoint(point_index, coord)
 
-        # Save the points in the contour to a vtkPoints object.
-        contour_pts = contour.GetPoints()
-        # Iterate through the list of points, but not the last two. (last two are
-        #  control points that bung up the solution)
-        radii = []
-        for point_index in range(contour_pts.GetNumberOfPoints() - 2):
-            # Save the point to a cordinate list.
-            coord = [0.0, 0.0, 0.0]
-            contour_pts.GetPoint(point_index, coord)
+#         # Compute the "radius" between the current point and the center of the contour.
+#         # Distance formula: sqrt(dx^2 + dy^2 + dz^2)
+#         radii.append(math.sqrt(math.pow(coord[0] - center[0], 2) +
+#                                 math.pow(coord[1] - center[1], 2) +
+#                                 math.pow(coord[2] - center[2], 2)))
 
-            # Compute the "radius" between the current point and the center of the contour.
-            # Distance formula: sqrt(dx^2 + dy^2 + dz^2)
-            radii.append(math.sqrt(math.pow(coord[0] - center[0], 2) +
-                                  math.pow(coord[1] - center[1], 2) +
-                                  math.pow(coord[2] - center[2], 2)))
+#     # Append the average of the "radii" to the list of contour radii as the nominal radius of the current contour.
+#     contour_radii.append(numpy.mean(radii))
 
-        # Append the average of the "radii" to the list of contour radii as the nominal radius of the current contour.
-        contour_radii.append(numpy.mean(radii))
-
-    # Log stats.
-    print("[contour_radii] Radius statistics:")
-    print("[contour_radii]   Min:\t\t" + str(min(contour_radii)))
-    print("[contour_radii]   Max:\t\t" + str(max(contour_radii)))
-    print("[contour_radii]   Avg:\t\t" + str(numpy.mean(contour_radii)))
-    print("[contour_radii]   Median:\t" + str(numpy.median(contour_radii)))
-except Exception as e:
-    print("Error!" + str(e))
-
-# Garbage collection.
-for id in repo_contour_ids:
-    Repository.Delete(id)
-# Repository.Delete('test')
+# # Log stats.
+# print("[contour_radii] Radius statistics:")
+# print("[contour_radii]   Min:\t\t" + str(min(contour_radii)))
+# print("[contour_radii]   Max:\t\t" + str(max(contour_radii)))
+# print("[contour_radii]   Avg:\t\t" + str(numpy.mean(contour_radii)))
+# print("[contour_radii]   Median:\t" + str(numpy.median(contour_radii)))
