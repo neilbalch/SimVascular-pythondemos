@@ -16,7 +16,7 @@ import random, os
 #  src_path (pathplanning.Path): Source path.
 #  initial_radius (double): Initial "average" radius to use.
 # Returns:
-#  String: Name of the resulting lofted solid.
+#  vtkPolyData: Resulting lofted surface.
 
 def create_solid_from_path(src_path, initial_radius):
     # Load in the source path and store the position points.
@@ -58,10 +58,11 @@ def create_solid_from_path(src_path, initial_radius):
 
         # Align the current contour with the previous one, beginning with the
         # second contour.
-        path_ctr_pds[index] = sv.geometry.align_profile(
-                                            path_ctr_pds[index - 1],
-                                            path_ctr_pds[index],
-                                            use_distance)
+        if not index is 0:
+            path_ctr_pds[index] = sv.geometry.align_profile(
+                                                path_ctr_pds[index - 1],
+                                                path_ctr_pds[index],
+                                                use_distance)
 
     # Loft the contours.
     # Set loft options.
@@ -88,7 +89,7 @@ def create_solid_from_path(src_path, initial_radius):
     # solid.NewObject(path_solid_name)
 
     # Cap the lofted volume.
-    sv.vmtk.cap_with_ids(surface=lofted_surface, fill_id=1, incremenet_id=True)
+    sv.vmtk.cap_with_ids(surface=lofted_surface, fill_id=1, increment_id=True)
     # path_lofted_capped_name = path_lofted_name + "_capped"
     # VMTKUtils.Cap_with_ids(path_lofted_name, path_lofted_capped_name, 0, 0)
     # solid.SetVtkPolyData(path_lofted_capped_name)
