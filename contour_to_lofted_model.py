@@ -1,6 +1,6 @@
-from sv import *
-import sv_vis as vis
+import sv
 import random, os
+# import graphics as graph
 
 # ##############################################################################
 # This script is a demo for how to work through the workflow of creating a path
@@ -13,156 +13,153 @@ import random, os
 # with radii +/- 0.25 from initial_radius.
 #
 # Args:
-#  src_path_name (String): Name of the source path.
+#  src_path (pathplanning.Path): Source path.
 #  initial_radius (double): Initial "average" radius to use.
 # Returns:
 #  String: Name of the resulting lofted solid.
 
-def create_solid_from_path(src_path_name, initial_radius):
+def create_solid_from_path(src_path, initial_radius):
     # Load in the source path and store the position points.
-    path = Path.pyPath()
-    path.GetObject(src_path_name)
-    path_pos_points = path.GetPathPosPts()
+    path_pos_points = src_path.get_curve_points()
 
     # Create contours from the points.
-    kernel = "Circle"
-    Contour.SetContourKernel(kernel)
-
     prev_radius = initial_radius # Last radius from which to add/subtract a random number.
     path_ctr_pds = []            # List of polydata objects created from the contours.
-    # Extract every 10'th contour.
-    for id in range(int(path.GetPathPtsNum() / 10)):
-        contour = Contour.pyContour()
-
-        # Create a new blank contour object.
-        path_contour_name = src_path_name + "-contour" + str(id * 10)
-        create_from_point = id * 10
-        contour.NewObject(path_contour_name, src_path_name, create_from_point)
+    # Extract every 10'th path point and create a circular contour around it.
+    for id in range(int(len(path_pos_points) / 10)):
+        path_point_id = id * 10
 
         # Randomize the radius and create the circular contour. Coords for the
         # center must be defined in absolute 3D space, so we must grab the real
         # position point from the path data.
-        center_pt = path_pos_points[create_from_point]
         radius = prev_radius + 0.5 * (random.random() - 0.5)
         prev_radius = radius
-        contour.SetCtrlPtsByRadius(center_pt, radius)
 
-        # Extract a polydata object from the created contour and save its name in the list.
-        pd_path_name = path_contour_name + "-pd"
-        path_ctr_pds.append(pd_path_name)
-        contour.GetPolyData(pd_path_name)
+        # Create a new circular contour object.
+        contour = sv.segmentation.Circle(radius = radius,
+                               center = path_pos_points[path_point_id],
+                               normal = src_path.get_curve_tangent(path_point_id))
 
-    # Resample the contour polydata objects.
-    num_samples = 60  # Number of samples to take around circumference of contour?
-    path_ctrs_pds_rspl = []
-    for id in path_ctr_pds:
-        new_id = id + "_resampled"
-        path_ctrs_pds_rspl.append(new_id)
-        Geom.SampleLoop(id, num_samples, new_id)
 
-    # Loft the resampled contours.
-    path_lofted_name = src_path_name + "_lofted"
-    num_contours = len(path_ctrs_pds_rspl) * 4  # Including endpoints, how many contours to interpolate between the end caps.
-    num_linear_pts_along_length = 120           # ?
-    num_modes = 20                              # ?
-    use_FFT = 0                                 # ?
-    use_linear_sample_along_length = 1          # Linearly interpolate the contours see num_contours_to_loft.
-    Geom.LoftSolid(path_ctrs_pds_rspl, path_lofted_name, num_samples,
-                  num_contours, num_linear_pts_along_length, num_modes,
-                  use_FFT, use_linear_sample_along_length)
+        # Extract a polydata object from the created contour and save it in the list.
+        path_ctr_pds.append(contour.get_polydata())
 
-    # Create a new solid from the lofted solid.
-    Solid.SetKernel('PolyData')
-    solid = Solid.pySolidModel()
-    path_solid_name = src_path_name + "_solid"
-    solid.NewObject(path_solid_name)
+    # Resample and align the contour polydata objects to ensure that all
+    # contours contain the same quantity of points and are all rotated such that
+    # the ids of each point in the contours are in the same position along the
+    # contours for lofting.
+    num_samples = 25    # Number of samples to take around circumference of contour.
+    use_distance = True # Specify option for contour alignment.
+    for index in range(0, len(path_ctr_pds)):
+        # Resample the current contour
+        path_ctr_pds[index] = sv.geometry.interpolate_closed_curve(
+                                            polydata=path_ctr_pds[id],
+                                            number_of_points=num_samples)
+
+        # Align the current contour with the previous one, beginning with the
+        # second contour.
+        path_ctr_pds[index] = sv.geometry.align_profile(
+                                            path_ctr_pds[index - 1],
+                                            path_ctr_pds[index],
+                                            use_distance)
+
+    # Loft the contours.
+    # Set loft options.
+    options = sv.geometry.LoftOptions()
+
+    # Use linear interpolation between spline sample points.
+    # loft_options.interpolate_spline_points = False
+    options.interpolate_spline_points = True
+
+    # Set the number of points to sample a spline if
+    # using linear interpolation between sample points.
+    options.num_spline_points = 50
+
+    # The number of longitudinal points used to sample splines.
+    options.num_long_points = 200
+
+    # Loft solid.
+    lofted_surface = sv.geometry.loft(polydata_list=path_ctr_pds, loft_options=options)
+
+    # # Create a new solid from the lofted solid.
+    # Solid.SetKernel('PolyData')
+    # solid = Solid.pySolidModel()
+    # path_solid_name = src_path + "_solid"
+    # solid.NewObject(path_solid_name)
+
     # Cap the lofted volume.
-    path_lofted_capped_name = path_lofted_name + "_capped"
-    VMTKUtils.Cap_with_ids(path_lofted_name, path_lofted_capped_name, 0, 0)
-    solid.SetVtkPolyData(path_lofted_capped_name)
-    num_triangles_on_cap = 150
-    solid.GetBoundaryFaces(num_triangles_on_cap)
+    sv.vmtk.cap_with_ids(surface=lofted_surface, fill_id=1, incremenet_id=True)
+    # path_lofted_capped_name = path_lofted_name + "_capped"
+    # VMTKUtils.Cap_with_ids(path_lofted_name, path_lofted_capped_name, 0, 0)
+    # solid.SetVtkPolyData(path_lofted_capped_name)
+    # num_triangles_on_cap = 150
+    # solid.GetBoundaryFaces(num_triangles_on_cap)
 
-    # Export the solid to a polydata object.
-    path_solid_pd_name = path_solid_name + "_pd"
-    solid.GetPolyData(path_solid_pd_name)
+
+    # # Export the solid to a polydata object.
+    # path_solid_pd_name = path_solid_name + "_pd"
+    # solid.GetPolyData(path_solid_pd_name)
 
     # solid.WriteNative(os.getcwd() + "/" + path_solid_name + ".vtp")
 
-    return path_solid_pd_name
+    return lofted_surface
 
 #
 # Initialize the first path.
 #
 
 # Create new path object.
-path1_name = "path1"
-path1 = Path.pyPath()
-path1.NewObject(path1_name)
+path1 = sv.pathplanning.Path()
 
 # Give it some points.
-path1.AddPoint([0.0, 0.0, 0.0])
-path1.AddPoint([0.0, 0.0, 10.0])
-path1.AddPoint([0.0, 0.0, 20.0])
-path1.AddPoint([5.0, 0.0, 30.0])
-path1.AddPoint([0.0, 0.0, 40.0])
-path1.AddPoint([0.0, 0.0, 50.0])
-path1.AddPoint([0.0, 0.0, 60.0])
-# Generate the path from the added control points.
-path1.CreatePath()
+path1.add_control_point([0.0, 0.0, 0.0])
+path1.add_control_point([0.0, 0.0, 10.0])
+path1.add_control_point([0.0, 0.0, 20.0])
+path1.add_control_point([5.0, 0.0, 30.0])
+path1.add_control_point([0.0, 0.0, 40.0])
+path1.add_control_point([0.0, 0.0, 50.0])
+path1.add_control_point([0.0, 0.0, 60.0])
 
 #
 # Initialize the second path.
 #
 
 # Create new path object.
-path2_name = "path2"
-path2 = Path.pyPath()
-path2.NewObject(path2_name)
+path2 = sv.pathplanning.Path()
 
 # Give it some points.
-path2.AddPoint([25.0, 0.0, 48.0])
-path2.AddPoint([20.0, 0.0, 42.5])
-path2.AddPoint([15.0, 0.0, 37.5])
-path2.AddPoint([10.0, 0.0, 32.5])
-path2.AddPoint([3.0, 0.0, 25.0])
-# Generate the path from the added control points.
-path2.CreatePath()
+path2.add_control_point([25.0, 0.0, 48.0])
+path2.add_control_point([20.0, 0.0, 42.5])
+path2.add_control_point([15.0, 0.0, 37.5])
+path2.add_control_point([10.0, 0.0, 32.5])
+path2.add_control_point([3.0, 0.0, 25.0])
 
-# Create solids from the paths.
-path1_solid_name = create_solid_from_path(path1_name, 5.0)
-path2_solid_name = create_solid_from_path(path2_name, 5.0)
+# Create surfaces from the paths.
+path1_surface_pd = create_solid_from_path(path1, 5.0)
+path2_surface_pd = create_solid_from_path(path2, 5.0)
 
-merged_solid_name = "merged_solid"
-Geom.Union(path1_solid_name, path2_solid_name, merged_solid_name)
+# Perform a boolean union to merge both surfaces together.
+# Geom.Union(path1_solid_name, path2_solid_name, merged_solid_name)
+modeler = sv.modeling.Modeler(sv.modeling.Kernel.POLYDATA)
+unioned_surface_pd = modeler.union(model1=path1_surface_pd,
+                                   model2=path2_surface_pd)
 
-# Render this all to a viewer.
-window_name = "RAW Model"
-ren1, renwin1 = vis.initRen(window_name)
-# actor1 = vis.pRepos(ren, merged_solid_cleaned_name)
-actor1 = vis.pRepos(ren1, merged_solid_name)
-# Set the renderer to draw the solids as a wireframe.
-# vis.polyDisplayWireframe(ren, merged_solid_cleaned_name)
+sv.dmg.add_path(name="path1", path=path1)
+sv.dmg.add_path(name="path2", path=path2)
+sv.dmg.add_geometry(name="unioned_surface", geometry=unioned_surface_pd,
+                    plugin="Mesh", node="path1")
 
-# TODO: Figure out how to effectively smooth over the model.
+# Render unioned surface to a viewer.
+# win_width = 500
+# win_height = 500
+# renderer, renderer_window = graph.init_graphics(win_width, win_height)
+# graph.add_geometry(renderer, unioned_surface_pd, color=[0.0, 1.0, 0.0],
+#                    wire=True, edges=False)
+# graph.display(renderer_window)
 
-merged_solid_smoothed_name = merged_solid_name + "_cleaned"
-Geom.Local_laplacian_smooth(merged_solid_name, merged_solid_smoothed_name, 500, 0.04)
-
-# Solid.SetKernel("PolyData")
-# solid = Solid.pySolidModel()
-# solid.NewObject(merged_solid_name)
-# merged_solid_faceIDs = solid.GetFaceIDs()
-# for id in range(len(merged_solid_faceIDs) - 1):
-#     solid.CreateEdgeBlend(merged_solid_faceIDs[id], merged_solid_faceIDs[id + 1],
-#                           0.25)
-
-# Render this all to a viewer.
-window_name = "PATCHED Model"
-ren2, renwin2 = vis.initRen(window_name)
-actor2 = vis.pRepos(ren2, merged_solid_smoothed_name)
-# Set the renderer to draw the solids as a wireframe.
-# vis.polyDisplayWireframe(ren, merged_solid_cleaned_name)
-
-vis.interact(ren1, 15000)
-vis.interact(ren2, 15000)
+# TODO: Implement smoothing operation to round over hard edges from boolean
+#       union operation once supported in SV Python API.
+# NOTE: Below lines are code from old SV Python API, circa summer 2019 and won't
+#       work anymore.
+# merged_solid_smoothed_name = merged_solid_name + "_cleaned"
+# Geom.Local_laplacian_smooth(merged_solid_name, merged_solid_smoothed_name, 500, 0.04)
