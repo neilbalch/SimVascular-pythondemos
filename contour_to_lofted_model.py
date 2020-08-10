@@ -28,6 +28,7 @@ def create_solid_from_path(src_path, initial_radius):
     # Extract every 10'th path point and create a circular contour around it.
     for id in range(int(len(path_pos_points) / 10)):
         path_point_id = id * 10
+        print("path_point_id: " + str(path_point_id))
 
         # Randomize the radius and create the circular contour. Coords for the
         # center must be defined in absolute 3D space, so we must grab the real
@@ -42,6 +43,11 @@ def create_solid_from_path(src_path, initial_radius):
 
 
         # Extract a polydata object from the created contour and save it in the list.
+        print(contour)
+        print(type(contour))
+        print(contour.get_polydata())
+        print(type(contour.get_polydata()))
+        print()
         path_ctr_pds.append(contour.get_polydata())
 
     # Resample and align the contour polydata objects to ensure that all
@@ -52,8 +58,10 @@ def create_solid_from_path(src_path, initial_radius):
     use_distance = True # Specify option for contour alignment.
     for index in range(0, len(path_ctr_pds)):
         # Resample the current contour
+        print("index: " + str(index))
+        print(type(path_ctr_pds[index]))
         path_ctr_pds[index] = sv.geometry.interpolate_closed_curve(
-                                            polydata=path_ctr_pds[id],
+                                            polydata=path_ctr_pds[index],
                                             number_of_points=num_samples)
 
         # Align the current contour with the previous one, beginning with the
