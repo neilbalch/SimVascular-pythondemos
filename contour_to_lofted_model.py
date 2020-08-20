@@ -91,7 +91,7 @@ def create_solid_from_path(src_path, initial_radius):
     # print(lofted_model.get_polydata())
 
     # Cap the lofted volume.
-    capped_model = sv.vmtk.cap_with_ids(surface=lofted_model.get_polydata(),
+    capped_model_pd = sv.vmtk.cap_with_ids(surface=lofted_model.get_polydata(),
                                         fill_id=1, increment_id=True)
     # path_lofted_capped_name = path_lofted_name + "_capped"
     # VMTKUtils.Cap_with_ids(path_lofted_name, path_lofted_capped_name, 0, 0)
@@ -99,7 +99,7 @@ def create_solid_from_path(src_path, initial_radius):
     # num_triangles_on_cap = 150
     # solid.GetBoundaryFaces(num_triangles_on_cap)
 
-    return capped_model
+    return capped_model_pd
 
 #
 # Initialize the first path.
@@ -132,14 +132,14 @@ path2.add_control_point([10.0, 0.0, 32.5])
 path2.add_control_point([3.0, 0.0, 25.0])
 
 # Create models from the paths.
-path1_model = create_solid_from_path(path1, 5.0)
-path2_model = create_solid_from_path(path2, 5.0)
+path1_model_pd = create_solid_from_path(path1, 5.0)
+path2_model_pd = create_solid_from_path(path2, 5.0)
 
 # Perform a boolean union to merge both models together.
 # Geom.Union(path1_solid_name, path2_solid_name, merged_solid_name)
 modeler = sv.modeling.Modeler(sv.modeling.Kernel.POLYDATA)
-unioned_model = modeler.union(model1=path1_model.get_polydata(),
-                              model2=path2_model.get_polydata())
+unioned_model = modeler.union(model1=path1_model_pd,
+                              model2=path2_model_pd)
 
 sv.dmg.add_path(name="path1", path=path1)
 sv.dmg.add_path(name="path2", path=path2)
