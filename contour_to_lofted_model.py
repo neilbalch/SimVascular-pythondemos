@@ -17,7 +17,7 @@ import random, os
 #  src_path (pathplanning.Path): Source path.
 #  initial_radius (double): Initial "average" radius to use.
 # Returns:
-#  vtkPolyData: Resulting lofted surface.
+#  ModelingModel: Resulting lofted model.
 
 def create_solid_from_path(src_path, initial_radius):
     # Load in the source path and store the position points.
@@ -91,22 +91,15 @@ def create_solid_from_path(src_path, initial_radius):
     print(lofted_model.get_polydata())
 
     # Cap the lofted volume.
-    sv.vmtk.cap_with_ids(surface=lofted_model.get_polydata(),
-                         fill_id=1, increment_id=True)
+    capped_model = sv.vmtk.cap_with_ids(surface=lofted_model.get_polydata(),
+                                        fill_id=1, increment_id=True)
     # path_lofted_capped_name = path_lofted_name + "_capped"
     # VMTKUtils.Cap_with_ids(path_lofted_name, path_lofted_capped_name, 0, 0)
     # solid.SetVtkPolyData(path_lofted_capped_name)
     # num_triangles_on_cap = 150
     # solid.GetBoundaryFaces(num_triangles_on_cap)
 
-
-    # # Export the solid to a polydata object.
-    # path_solid_pd_name = path_solid_name + "_pd"
-    # solid.GetPolyData(path_solid_pd_name)
-
-    # solid.WriteNative(os.getcwd() + "/" + path_solid_name + ".vtp")
-
-    return lofted_surface
+    return capped_model
 
 #
 # Initialize the first path.
@@ -138,27 +131,31 @@ path2.add_control_point([15.0, 0.0, 37.5])
 path2.add_control_point([10.0, 0.0, 32.5])
 path2.add_control_point([3.0, 0.0, 25.0])
 
-# Create surfaces from the paths.
-path1_surface_pd = create_solid_from_path(path1, 5.0)
-path2_surface_pd = create_solid_from_path(path2, 5.0)
+# Create models from the paths.
+path1_model = create_solid_from_path(path1, 5.0)
+path2_model = create_solid_from_path(path2, 5.0)
 
-# Perform a boolean union to merge both surfaces together.
+# Perform a boolean union to merge both models together.
 # Geom.Union(path1_solid_name, path2_solid_name, merged_solid_name)
 modeler = sv.modeling.Modeler(sv.modeling.Kernel.POLYDATA)
-unioned_surface_pd = modeler.union(model1=path1_surface_pd,
-                                   model2=path2_surface_pd)
+unioned_model = modeler.union(model1=path1_model.get_polydata(),
+                              model2=path2_model.get_polydata())
 
 sv.dmg.add_path(name="path1", path=path1)
 sv.dmg.add_path(name="path2", path=path2)
-sv.dmg.add_geometry(name="unioned_surface", geometry=unioned_surface_pd,
+sv.dmg.add_geometry(name="unioned_surface",
+                    geometry=unioned_model.get_polydata(),
                     plugin="Mesh", node="path1")
+
+# Export the solid to a polydata object written to ./unioned_model.vtp.
+unioned_model.write(os.getcwd() + "/unioned_model.vtp")
 
 # Render unioned surface to a viewer.
 # win_width = 500
 # win_height = 500
 # renderer, renderer_window = graph.init_graphics(win_width, win_height)
-# graph.add_geometry(renderer, unioned_surface_pd, color=[0.0, 1.0, 0.0],
-#                    wire=True, edges=False)
+# graph.add_geometry(renderer, unioned_model.get_polydata(),
+#                    color=[0.0, 1.0, 0.0], wire=True, edges=False)
 # graph.display(renderer_window)
 
 # TODO: Implement smoothing operation to round over hard edges from boolean
