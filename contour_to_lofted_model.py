@@ -1,4 +1,5 @@
 import sv
+import vtk
 import random, os
 # import graphics as graph
 
@@ -28,7 +29,6 @@ def create_solid_from_path(src_path, initial_radius):
     # Extract every 10'th path point and create a circular contour around it.
     for id in range(int(len(path_pos_points) / 10)):
         path_point_id = id * 10
-        print("path_point_id: " + str(path_point_id))
 
         # Randomize the radius and create the circular contour. Coords for the
         # center must be defined in absolute 3D space, so we must grab the real
@@ -43,11 +43,6 @@ def create_solid_from_path(src_path, initial_radius):
 
 
         # Extract a polydata object from the created contour and save it in the list.
-        print(contour)
-        print(type(contour))
-        print(contour.get_polydata())
-        print(type(contour.get_polydata()))
-        print()
         path_ctr_pds.append(contour.get_polydata())
 
     # Resample and align the contour polydata objects to ensure that all
@@ -57,9 +52,7 @@ def create_solid_from_path(src_path, initial_radius):
     num_samples = 25    # Number of samples to take around circumference of contour.
     use_distance = True # Specify option for contour alignment.
     for index in range(0, len(path_ctr_pds)):
-        # Resample the current contour
-        print("index: " + str(index))
-        print(type(path_ctr_pds[index]))
+        # Resample the current contour.
         path_ctr_pds[index] = sv.geometry.interpolate_closed_curve(
                                             polydata=path_ctr_pds[index],
                                             number_of_points=num_samples)
@@ -90,14 +83,16 @@ def create_solid_from_path(src_path, initial_radius):
     # Loft solid.
     lofted_surface = sv.geometry.loft(polydata_list=path_ctr_pds, loft_options=options)
 
-    # # Create a new solid from the lofted solid.
-    # Solid.SetKernel('PolyData')
-    # solid = Solid.pySolidModel()
-    # path_solid_name = src_path + "_solid"
-    # solid.NewObject(path_solid_name)
+    # Create a new solid from the lofted solid.
+    lofted_model = sv.modeling.PolyData()
+    lofted_model.set_surface(surface=lofted_surface)
+
+    print("lofted_model:")
+    print(lofted_model.get_polydata())
 
     # Cap the lofted volume.
-    sv.vmtk.cap_with_ids(surface=lofted_surface, fill_id=1, increment_id=True)
+    sv.vmtk.cap_with_ids(surface=lofted_model.get_polydata(),
+                         fill_id=1, increment_id=True)
     # path_lofted_capped_name = path_lofted_name + "_capped"
     # VMTKUtils.Cap_with_ids(path_lofted_name, path_lofted_capped_name, 0, 0)
     # solid.SetVtkPolyData(path_lofted_capped_name)
