@@ -87,8 +87,8 @@ def create_solid_from_path(src_path, initial_radius):
     lofted_model = sv.modeling.PolyData()
     lofted_model.set_surface(surface=lofted_surface)
 
-    print("lofted_model:")
-    print(lofted_model.get_polydata())
+    # print("lofted_model:")
+    # print(lofted_model.get_polydata())
 
     # Cap the lofted volume.
     capped_model = sv.vmtk.cap_with_ids(surface=lofted_model.get_polydata(),
@@ -148,7 +148,8 @@ sv.dmg.add_geometry(name="unioned_surface",
                     plugin="Mesh", node="path1")
 
 # Export the solid to a polydata object written to ./unioned_model.vtp.
-unioned_model.write(os.getcwd() + "/unioned_model.vtp")
+unioned_model.write(file_name=os.getcwd() + "/unioned_model",
+                    format="vtp")
 
 # Render unioned surface to a viewer.
 # win_width = 500
