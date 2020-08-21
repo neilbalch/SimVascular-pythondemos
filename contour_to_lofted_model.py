@@ -17,7 +17,7 @@ import random, os
 #  src_path (pathplanning.Path): Source path.
 #  initial_radius (double): Initial "average" radius to use.
 # Returns:
-#  ModelingModel: Resulting lofted model.
+#  vtkPolyData: Resulting lofted model.
 
 def create_solid_from_path(src_path, initial_radius):
     # Load in the source path and store the position points.
@@ -87,12 +87,11 @@ def create_solid_from_path(src_path, initial_radius):
     lofted_model = sv.modeling.PolyData()
     lofted_model.set_surface(surface=lofted_surface)
 
-    # print("lofted_model:")
-    # print(lofted_model.get_polydata())
-
     # Cap the lofted volume.
-    capped_model_pd = sv.vmtk.cap_with_ids(surface=lofted_model.get_polydata(),
-                                        fill_id=1, increment_id=True)
+    capped_model_pd = sv.vmtk.cap(surface=lofted_model.get_polydata(),
+                                  use_center=False)
+    # capped_model_pd = sv.vmtk.cap_with_ids(surface=lofted_model.get_polydata(),
+    #                                     fill_id=1, increment_id=True)
     # path_lofted_capped_name = path_lofted_name + "_capped"
     # VMTKUtils.Cap_with_ids(path_lofted_name, path_lofted_capped_name, 0, 0)
     # solid.SetVtkPolyData(path_lofted_capped_name)
@@ -131,21 +130,25 @@ path2.add_control_point([15.0, 0.0, 37.5])
 path2.add_control_point([10.0, 0.0, 32.5])
 path2.add_control_point([3.0, 0.0, 25.0])
 
-# Create models from the paths.
+# Create model PolyData from the paths.
 path1_model_pd = create_solid_from_path(path1, 5.0)
 path2_model_pd = create_solid_from_path(path2, 5.0)
+
+# Import the model PolyData into model objects.
+path1_model = sv.modeling.PolyData()
+path2_model = sv.modeling.PolyData()
+path1_model.set_surface(surface=path1_model_pd)
+path2_model.set_surface(surface=path2_model_pd)
 
 # Perform a boolean union to merge both models together.
 # Geom.Union(path1_solid_name, path2_solid_name, merged_solid_name)
 modeler = sv.modeling.Modeler(sv.modeling.Kernel.POLYDATA)
-unioned_model = modeler.union(model1=path1_model_pd,
-                              model2=path2_model_pd)
+unioned_model = modeler.union(model1=path1_model,
+                              model2=path2_model)
 
 sv.dmg.add_path(name="path1", path=path1)
 sv.dmg.add_path(name="path2", path=path2)
-sv.dmg.add_geometry(name="unioned_surface",
-                    geometry=unioned_model.get_polydata(),
-                    plugin="Mesh", node="path1")
+sv.dmg.add_model(name="unioned_model", model=unioned_model)
 
 # Export the solid to a polydata object written to ./unioned_model.vtp.
 unioned_model.write(file_name=os.getcwd() + "/unioned_model",
