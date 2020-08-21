@@ -17,15 +17,15 @@ import random, os
 #  src_path (pathplanning.Path): Source path.
 #  initial_radius (double): Initial "average" radius to use.
 # Returns:
-#  vtkPolyData: Resulting lofted model.
+#  sv.modeling.Model: Resulting lofted model.
 
 def create_solid_from_path(src_path, initial_radius):
-    # Load in the source path and store the position points.
+    # Store the path position points.
     path_pos_points = src_path.get_curve_points()
 
     # Create contours from the points.
     prev_radius = initial_radius # Last radius from which to add/subtract a random number.
-    path_ctr_pds = []            # List of polydata objects created from the contours.
+    contour_pds = []             # List of polydata objects created from the contours.
     # Extract every 10'th path point and create a circular contour around it.
     for id in range(int(len(path_pos_points) / 10)):
         path_point_id = id * 10
@@ -43,7 +43,7 @@ def create_solid_from_path(src_path, initial_radius):
 
 
         # Extract a polydata object from the created contour and save it in the list.
-        path_ctr_pds.append(contour.get_polydata())
+        contour_pds.append(contour.get_polydata())
 
     # Resample and align the contour polydata objects to ensure that all
     # contours contain the same quantity of points and are all rotated such that
@@ -51,37 +51,33 @@ def create_solid_from_path(src_path, initial_radius):
     # contours for lofting.
     num_samples = 25    # Number of samples to take around circumference of contour.
     use_distance = True # Specify option for contour alignment.
-    for index in range(0, len(path_ctr_pds)):
+    for index in range(0, len(contour_pds)):
         # Resample the current contour.
-        path_ctr_pds[index] = sv.geometry.interpolate_closed_curve(
-                                            polydata=path_ctr_pds[index],
+        contour_pds[index] = sv.geometry.interpolate_closed_curve(
+                                            polydata=contour_pds[index],
                                             number_of_points=num_samples)
 
         # Align the current contour with the previous one, beginning with the
         # second contour.
         if not index is 0:
-            path_ctr_pds[index] = sv.geometry.align_profile(
-                                                path_ctr_pds[index - 1],
-                                                path_ctr_pds[index],
+            contour_pds[index] = sv.geometry.align_profile(
+                                                contour_pds[index - 1],
+                                                contour_pds[index],
                                                 use_distance)
 
     # Loft the contours.
     # Set loft options.
     options = sv.geometry.LoftOptions()
-
     # Use linear interpolation between spline sample points.
-    # loft_options.interpolate_spline_points = False
     options.interpolate_spline_points = True
-
     # Set the number of points to sample a spline if
     # using linear interpolation between sample points.
     options.num_spline_points = 50
-
     # The number of longitudinal points used to sample splines.
     options.num_long_points = 200
 
     # Loft solid.
-    lofted_surface = sv.geometry.loft(polydata_list=path_ctr_pds, loft_options=options)
+    lofted_surface = sv.geometry.loft(polydata_list=contour_pds, loft_options=options)
 
     # Create a new solid from the lofted solid.
     lofted_model = sv.modeling.PolyData()
@@ -98,16 +94,18 @@ def create_solid_from_path(src_path, initial_radius):
     # num_triangles_on_cap = 150
     # solid.GetBoundaryFaces(num_triangles_on_cap)
 
-    return capped_model_pd
+    # Import the capped model PolyData into model objects.
+    capped_model = sv.modeling.PolyData()
+    capped_model.set_surface(surface=capped_model_pd)
+
+    return capped_model
 
 #
 # Initialize the first path.
 #
 
-# Create new path object.
+# Create new path object and give it some points.
 path1 = sv.pathplanning.Path()
-
-# Give it some points.
 path1.add_control_point([0.0, 0.0, 0.0])
 path1.add_control_point([0.0, 0.0, 10.0])
 path1.add_control_point([0.0, 0.0, 20.0])
@@ -120,28 +118,19 @@ path1.add_control_point([0.0, 0.0, 60.0])
 # Initialize the second path.
 #
 
-# Create new path object.
+# Create new path object and give it some points.
 path2 = sv.pathplanning.Path()
-
-# Give it some points.
 path2.add_control_point([25.0, 0.0, 48.0])
 path2.add_control_point([20.0, 0.0, 42.5])
 path2.add_control_point([15.0, 0.0, 37.5])
 path2.add_control_point([10.0, 0.0, 32.5])
 path2.add_control_point([3.0, 0.0, 25.0])
 
-# Create model PolyData from the paths.
-path1_model_pd = create_solid_from_path(path1, 5.0)
-path2_model_pd = create_solid_from_path(path2, 5.0)
-
-# Import the model PolyData into model objects.
-path1_model = sv.modeling.PolyData()
-path2_model = sv.modeling.PolyData()
-path1_model.set_surface(surface=path1_model_pd)
-path2_model.set_surface(surface=path2_model_pd)
+# Create solid models from the paths.
+path1_model = create_solid_from_path(path1, 5.0)
+path2_model = create_solid_from_path(path2, 5.0)
 
 # Perform a boolean union to merge both models together.
-# Geom.Union(path1_solid_name, path2_solid_name, merged_solid_name)
 modeler = sv.modeling.Modeler(sv.modeling.Kernel.POLYDATA)
 unioned_model = modeler.union(model1=path1_model,
                               model2=path2_model)
