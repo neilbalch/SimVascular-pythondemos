@@ -126,6 +126,10 @@ path2.add_control_point([15.0, 0.0, 37.5])
 path2.add_control_point([10.0, 0.0, 32.5])
 path2.add_control_point([3.0, 0.0, 25.0])
 
+#
+# Create solid models from the paths and merge them together.
+#
+
 # Create solid models from the paths.
 path1_model = create_solid_from_path(path1, 5.0)
 path2_model = create_solid_from_path(path2, 5.0)
@@ -135,13 +139,29 @@ modeler = sv.modeling.Modeler(sv.modeling.Kernel.POLYDATA)
 unioned_model = modeler.union(model1=path1_model,
                               model2=path2_model)
 
+# TODO: Implement smoothing operation to round over hard edges from boolean
+#       union operation once supported in SV Python API.
+# NOTE: Below lines are code from old SV Python API, circa summer 2019 and won't
+#       work anymore.
+# merged_solid_smoothed_name = merged_solid_name + "_cleaned"
+# Geom.Local_laplacian_smooth(merged_solid_name, merged_solid_smoothed_name, 500, 0.04)
+
+#
+# Visualize and export generated geometry.
+#
+
+# Add all geometry objects to the SimVascular Data Manager (SV DMG) for
+# results visualization.
+# TODO: Figure out how to import the segmentations into the SV DMG and fix the
+#       sv.dmg.add_model() method call.
+# NOTE: These method calls will only function if a SV project is loaded or
+#       initialized because they profice access to the SV DMG.
 sv.dmg.add_path(name="path1", path=path1)
 sv.dmg.add_path(name="path2", path=path2)
 sv.dmg.add_model(name="unioned_model", model=unioned_model)
 
 # Export the solid to a polydata object written to ./unioned_model.vtp.
-unioned_model.write(file_name=os.getcwd() + "/unioned_model",
-                    format="vtp")
+unioned_model.write(file_name=os.getcwd() + "/unioned_model", format="vtp")
 
 # Render unioned surface to a viewer.
 # win_width = 500
@@ -150,10 +170,3 @@ unioned_model.write(file_name=os.getcwd() + "/unioned_model",
 # graph.add_geometry(renderer, unioned_model.get_polydata(),
 #                    color=[0.0, 1.0, 0.0], wire=True, edges=False)
 # graph.display(renderer_window)
-
-# TODO: Implement smoothing operation to round over hard edges from boolean
-#       union operation once supported in SV Python API.
-# NOTE: Below lines are code from old SV Python API, circa summer 2019 and won't
-#       work anymore.
-# merged_solid_smoothed_name = merged_solid_name + "_cleaned"
-# Geom.Local_laplacian_smooth(merged_solid_name, merged_solid_smoothed_name, 500, 0.04)
