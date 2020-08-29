@@ -17,7 +17,7 @@ import random, os
 #  src_path (pathplanning.Path): Source path.
 #  initial_radius (double): Initial "average" radius to use.
 # Returns:
-#  sv.modeling.Model: Resulting lofted model.
+#  tuple(list[sv.segmentation.Circle], sv.modeling.Model): Lofted model and contours.
 
 def create_solid_from_path(src_path, initial_radius):
     # Store the path position points.
@@ -25,6 +25,7 @@ def create_solid_from_path(src_path, initial_radius):
 
     # Create contours from the points.
     prev_radius = initial_radius # Last radius from which to add/subtract a random number.
+    contours = []                # List of contour objects created.
     contour_pds = []             # List of polydata objects created from the contours.
     # Extract every 10'th path point and create a circular contour around it.
     for id in range(int(len(path_pos_points) / 10)):
@@ -43,6 +44,7 @@ def create_solid_from_path(src_path, initial_radius):
 
 
         # Extract a polydata object from the created contour and save it in the list.
+        contours.append(contour)
         contour_pds.append(contour.get_polydata())
 
     # Resample and align the contour polydata objects to ensure that all
@@ -98,7 +100,7 @@ def create_solid_from_path(src_path, initial_radius):
     capped_model = sv.modeling.PolyData()
     capped_model.set_surface(surface=capped_model_pd)
 
-    return capped_model
+    return (contours, capped_model)
 
 #
 # Initialize the first path.
@@ -131,20 +133,28 @@ path2.add_control_point([3.0, 0.0, 25.0])
 #
 
 # Create solid models from the paths.
-path1_model = create_solid_from_path(path1, 5.0)
-path2_model = create_solid_from_path(path2, 5.0)
+path1_contours, path1_model = create_solid_from_path(path1, 5.0)
+path2_contours, path2_model = create_solid_from_path(path2, 5.0)
 
 # Perform a boolean union to merge both models together.
 modeler = sv.modeling.Modeler(sv.modeling.Kernel.POLYDATA)
 unioned_model = modeler.union(model1=path1_model,
                               model2=path2_model)
 
-# TODO: Implement smoothing operation to round over hard edges from boolean
-#       union operation once supported in SV Python API.
-# NOTE: Below lines are code from old SV Python API, circa summer 2019 and won't
-#       work anymore.
-# merged_solid_smoothed_name = merged_solid_name + "_cleaned"
-# Geom.Local_laplacian_smooth(merged_solid_name, merged_solid_smoothed_name, 500, 0.04)
+#
+# Blend faces from unioned_model together.
+#
+
+# Perform smoothing operation to round over hard edges from boolean union
+# operation once supported in SV Python API.
+options = sv.geometry.BlendOptions()
+options.num_lapsmooth_iterations = 500
+
+blend_radius = 1.0
+blend_faces = [{'radius': blend_radius, 'face1': 1, 'face2': 2}]
+
+blended_model_pd = sv.geometry.local_blend(surface=unioned_model,
+                                           faces=blend_faces, options=options)
 
 #
 # Visualize and export generated geometry.
@@ -153,12 +163,15 @@ unioned_model = modeler.union(model1=path1_model,
 # Add all geometry objects to the SimVascular Data Manager (SV DMG) for
 # results visualization.
 # TODO: Figure out how to import the segmentations into the SV DMG and fix the
-#       sv.dmg.add_model() method call.
+#       sv.dmg.add_model() method call, figure out how to add blended model.
 # NOTE: These method calls will only function if a SV project is loaded or
 #       initialized because they profice access to the SV DMG.
 sv.dmg.add_path(name="path1", path=path1)
 sv.dmg.add_path(name="path2", path=path2)
+sv.dmg.add_segmentation(name="path1", path="path1", segmentations=path1_contours)
+sv.dmg.add_segmentation(name="path2", path="path2", segmentations=path2_contours)
 sv.dmg.add_model(name="unioned_model", model=unioned_model)
+# sv.dmg.add_model(name="unioned_model", model=blended_model_pd)
 
 # Export the solid to a polydata object written to ./unioned_model.vtp.
 unioned_model.write(file_name=os.getcwd() + "/unioned_model", format="vtp")
